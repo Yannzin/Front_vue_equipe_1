@@ -38,10 +38,11 @@
             <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i>Carrinho</h5>
             <button class="btn btn-sm btn-outline-secondary" @click="fecharCarrinho" title="Fechar">&times;</button>
           </div>
-          <div class="p-4 text-center text-muted">
-            <i class="fas fa-box-open fa-3x mb-3"></i>
-            <p>O carrinho será implementado na Atividade 2.</p>
-          </div>
+            <CarrinhoCompras :itens="carrinho"
+              @remover-item="removerItemCarrinho"
+              @atualizar-quantidade="atualizarQuantidade"
+              @finalizar-compra="finalizarCompra"
+            />
         </div>
       </transition>
     </div>
@@ -64,17 +65,19 @@
 
 import ListaProdutos from './components/ListaProdutos.vue'
 import AvaliacaoProduto from './components/AvaliacaoProduto.vue'
-
+import CarrinhoCompras from './components/CarrinhoCompras.vue'
 export default {
   name: 'App',
   components: {
     ListaProdutos,
-    AvaliacaoProduto
+    AvaliacaoProduto,
+    CarrinhoCompras
   },
   data() {
     return {
       produtoSelecionado: null,
-      carrinhoAberto: false
+      carrinhoAberto: false,
+      carrinho: []
     }
   },
   methods: {
@@ -85,8 +88,26 @@ export default {
       this.carrinhoAberto = false
     },
     handleProdutoAdicionado(produto) {
-      // Aqui vocês podem implementar a lógica de adição ao carrinho
+      const itemExistente = this.carrinho.find(p => p.id === produto.id)
+      if (itemExistente) {
+        itemExistente.quantidade++
+      } else {
+        this.carrinho.push({ ...produto, quantidade: 1 })
+      }
     },
+        removerItemCarrinho(id) {
+      this.carrinho = this.carrinho.filter(p => p.id !== id)
+    },
+    atualizarQuantidade({ id, quantidade }) {
+      const item = this.carrinho.find(p => p.id === id)
+      if (item && quantidade > 0) item.quantidade = quantidade
+    },
+    finalizarCompra() {
+      alert('Compra finalizada com sucesso!')
+      this.carrinho = []
+      this.carrinhoAberto = false
+    },
+    
     handleVisualizarProduto(produto) {
       this.produtoSelecionado = produto
     },
