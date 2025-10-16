@@ -1,34 +1,33 @@
 <script>
+import ListaTarefas from './components/ListaTarefas.vue'
+
 export default {
-  data() {
-    return {
-      novaTarefa: '',
-      tarefas: []
-    }
-  },
-  methods: {
-    adicionarTarefa() {
-      if (this.novaTarefa.trim() !== '') {
-        this.tarefas.push(this.novaTarefa)
-        this.novaTarefa = ''
-      }
-    }
+  name: 'App',
+  components: {
+    ListaTarefas
   }
 }
 </script>
 
 <template>
-  <div>
-    <h1>Lista de Tarefas</h1>
-    <input v-model="novaTarefa" placeholder="Nova tarefa" />
-    <button @click="adicionarTarefa">Adicionar</button>
-
-    <p>Total de tarefas: {{ tarefas.length }}</p>
-
-    <ul>
-      <li v-for="(tarefa, index) in tarefas" :key="index">
-        {{ tarefa }}
-      </li>
-    </ul>
+  <div id="app">
+    <ListaTarefas />
   </div>
 </template>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 40px;
+}
+</style>
