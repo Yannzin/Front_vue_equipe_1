@@ -1,4 +1,4 @@
-# Projeto Localiza
+# Projeto Localiza #(Equipe 1)
 
 É um sistema de rastreamento de veículos, permite fazer o cadastro de veículos e localizá
 los.
