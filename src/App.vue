@@ -11,6 +11,11 @@
       </div>
     </header>
 
+  <div id="app" class="container mt-5">
+    <GerenciadorProdutos />
+  </div>
+
+
     <!-- Exercício 1: Sistema de Avaliações -->
     <div class="container position-relative">
       <!-- Botão flutuante do carrinho -->
@@ -66,12 +71,15 @@
 import ListaProdutos from './components/ListaProdutos.vue'
 import AvaliacaoProduto from './components/AvaliacaoProduto.vue'
 import CarrinhoCompras from './components/CarrinhoCompras.vue'
+import GerenciadorProdutos from './components/GerenciadorProdutos.vue';
 export default {
   name: 'App',
   components: {
     ListaProdutos,
     AvaliacaoProduto,
-    CarrinhoCompras
+    CarrinhoCompras,
+    GerenciadorProdutos
+
   },
   data() {
     return {
