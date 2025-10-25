@@ -1,207 +1,162 @@
-/**
- * Sistema de validação reutilizável
- */
-export class FormValidator {
-  constructor() {
-    this.rules = {}
-    this.errors = {}
+// Funcoes de validacao
+// Regras de validacao reutilizaveis para formularios
+
+import { VALIDACAO } from './constants'
+
+// Valida se um valor esta vazio
+export function validarObrigatorio(valor) {
+  if (typeof valor === 'string') {
+    return valor.trim().length > 0
   }
-  
-  /**
-   * Adicionar regras de validação
-   */
-  setRules(fieldName, rules) {
-    this.rules[fieldName] = rules
-    return this
+  return valor !== null && valor !== undefined && valor !== ''
+}
+
+// Valida formato de email
+export function validarEmail(email) {
+  if (!email) return false
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return regex.test(email)
+}
+
+// Valida forca da senha
+export function validarSenhaForte(senha) {
+  if (!senha) return false
+  if (senha.length < VALIDACAO.SENHA_MIN_LENGTH) {
+    return false
   }
-  
-  /**
-   * Validar um campo específico
-   */
-  validateField(fieldName, value) {
-    const rules = this.rules[fieldName]
-    if (!rules) return true
-    
-    this.errors[fieldName] = []
-    
-    for (const rule of rules) {
-      const result = this.executeRule(rule, value, fieldName)
-      if (result !== true) {
-        this.errors[fieldName].push(result)
-      }
-    }
-    
-    return this.errors[fieldName].length === 0
-  }
-  
-  /**
-   * Validar todos os campos
-   */
-  validate(data) {
-    let isValid = true
-    this.errors = {}
-    
-    for (const fieldName in this.rules) {
-      const fieldValid = this.validateField(fieldName, data[fieldName])
-      if (!fieldValid) {
-        isValid = false
-      }
-    }
-    
-    return isValid
-  }
-  
-  /**
-   * Executar regra específica
-   */
-  executeRule(rule, value, fieldName) {
-    if (typeof rule === 'function') {
-      return rule(value, fieldName)
-    }
-    
-    if (typeof rule === 'object') {
-      return this.executeBuiltInRule(rule, value, fieldName)
-    }
-    
-    // Regra string simples
-    return this.executeBuiltInRule({ type: rule }, value, fieldName)
-  }
-  
-  /**
-   * Regras built-in
-   */
-  executeBuiltInRule(rule, value, fieldName) {
-    switch (rule.type) {
-      case 'required':
-        return this.validateRequired(value) || 
-               (rule.message || `${fieldName} é obrigatório`)
-      
-      case 'email':
-        return this.validateEmail(value) || 
-               (rule.message || 'Email inválido')
-      
-      case 'min':
-        return this.validateMin(value, rule.value) || 
-               (rule.message || `Mínimo ${rule.value} caracteres`)
-      
-      case 'max':
-        return this.validateMax(value, rule.value) || 
-               (rule.message || `Máximo ${rule.value} caracteres`)
-      
-      case 'pattern':
-        return this.validatePattern(value, rule.pattern) || 
-               (rule.message || 'Formato inválido')
-      
-      case 'custom':
-        return rule.validator(value) || rule.message
-      
-      default:
-        return true
-    }
-  }
-  
-  // Validadores específicos
-  validateRequired(value) {
-    if (Array.isArray(value)) return value.length > 0
-    if (typeof value === 'string') return value.trim().length > 0
-    return value !== null && value !== undefined && value !== ''
-  }
-  
-  validateEmail(value) {
-    if (!value) return true // Opcional se não for required
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    return emailRegex.test(value)
-  }
-  
-  validateMin(value, min) {
-    if (!value) return true
-    return value.toString().length >= min
-  }
-  
-  validateMax(value, max) {
-    if (!value) return true
-    return value.toString().length <= max
-  }
-  
-  validatePattern(value, pattern) {
-    if (!value) return true
-    const regex = new RegExp(pattern)
-    return regex.test(value)
-  }
-  
-  /**
-   * Obter erros de um campo
-   */
-  getFieldErrors(fieldName) {
-    return this.errors[fieldName] || []
-  }
-  
-  /**
-   * Verificar se campo tem erros
-   */
-  hasFieldError(fieldName) {
-    return this.getFieldErrors(fieldName).length > 0
-  }
-  
-  /**
-   * Obter primeiro erro de um campo
-   */
-  getFirstFieldError(fieldName) {
-    const errors = this.getFieldErrors(fieldName)
-    return errors.length > 0 ? errors[0] : null
-  }
-  
-  /**
-   * Limpar erros
-   */
-  clearErrors(fieldName = null) {
-    if (fieldName) {
-      delete this.errors[fieldName]
-    } else {
-      this.errors = {}
-    }
+  return true
+}
+
+// Valida comprimento minimo de texto
+export function validarComprimentoMinimo(texto, minimo = 3) {
+  if (!texto) return false
+  return texto.trim().length >= minimo
+}
+
+// Valida comprimento maximo de texto
+export function validarComprimentoMaximo(texto, maximo = 500) {
+  if (!texto) return true
+  return texto.trim().length <= maximo
+}
+
+// Valida se preco e um numero valido
+export function validarPreco(preco) {
+  const numero = parseFloat(preco)
+  if (isNaN(numero)) return false
+  if (numero < VALIDACAO.PRECO_MIN) return false
+  if (numero > VALIDACAO.PRECO_MAX) return false
+  return true
+}
+
+// Valida se estoque e um numero inteiro positivo
+export function validarEstoque(estoque) {
+  const numero = parseInt(estoque, 10)
+  if (isNaN(numero)) return false
+  if (numero < VALIDACAO.ESTOQUE_MIN) return false
+  if (numero > VALIDACAO.ESTOQUE_MAX) return false
+  if (!Number.isInteger(numero)) return false
+  return true
+}
+
+// Valida URL (opcional - pode ser vazia)
+export function validarUrl(url) {
+  if (!url || url.trim() === '') return true
+  try {
+    new URL(url)
+    return true
+  } catch {
+    return false
   }
 }
 
-// Validadores pré-definidos
-export const validators = {
-  cpf: (value) => {
-    if (!value) return true
-    const cpf = value.replace(/\D/g, '')
-    if (cpf.length !== 11) return false
-    
-    // Validação básica de CPF
-    let soma = 0
-    for (let i = 0; i < 9; i++) {
-      soma += parseInt(cpf.charAt(i)) * (10 - i)
-    }
-    let resto = (soma * 10) % 11
-    if (resto === 10 || resto === 11) resto = 0
-    if (resto !== parseInt(cpf.charAt(9))) return false
-    
-    soma = 0
-    for (let i = 0; i < 10; i++) {
-      soma += parseInt(cpf.charAt(i)) * (11 - i)
-    }
-    resto = (soma * 10) % 11
-    if (resto === 10 || resto === 11) resto = 0
-    return resto === parseInt(cpf.charAt(10))
-  },
+// Valida se categoria e valida
+export function validarCategoria(categoria, categoriasPermitidas) {
+  if (!categoria) return false
+  return categoriasPermitidas.includes(categoria)
+}
+
+// Conjunto de validacoes para formulario de produto
+export function validarFormularioProduto(dados, categoriasPermitidas) {
+  const erros = {}
   
-  phone: (value) => {
-    if (!value) return true
-    const phone = value.replace(/\D/g, '')
-    return phone.length >= 10 && phone.length <= 11
-  },
+  if (!validarObrigatorio(dados.nome)) {
+    erros.nome = 'Nome e obrigatorio'
+  } else if (!validarComprimentoMinimo(dados.nome, VALIDACAO.NOME_MIN_LENGTH)) {
+    erros.nome = `Nome deve ter no minimo ${VALIDACAO.NOME_MIN_LENGTH} caracteres`
+  }
   
-  strongPassword: (value) => {
-    if (!value) return true
-    const hasUpper = /[A-Z]/.test(value)
-    const hasLower = /[a-z]/.test(value)
-    const hasNumber = /\d/.test(value)
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(value)
-    const isLongEnough = value.length >= 8
-    
-    return hasUpper && hasLower && hasNumber && hasSpecial && isLongEnough
+  if (dados.descricao && !validarComprimentoMaximo(dados.descricao, VALIDACAO.DESCRICAO_MAX_LENGTH)) {
+    erros.descricao = `Descricao deve ter no maximo ${VALIDACAO.DESCRICAO_MAX_LENGTH} caracteres`
+  }
+  
+  if (!validarObrigatorio(dados.preco)) {
+    erros.preco = 'Preco e obrigatorio'
+  } else if (!validarPreco(dados.preco)) {
+    erros.preco = 'Preco invalido'
+  }
+  
+  if (!validarEstoque(dados.estoque)) {
+    erros.estoque = 'Estoque deve ser um numero inteiro positivo'
+  }
+  
+  if (!validarCategoria(dados.categoria, categoriasPermitidas)) {
+    erros.categoria = 'Categoria invalida'
+  }
+  
+  if (!validarUrl(dados.imagem_url)) {
+    erros.imagem_url = 'URL da imagem invalida'
+  }
+  
+  return {
+    valido: Object.keys(erros).length === 0,
+    erros
+  }
+}
+
+// Conjunto de validacoes para formulario de login
+export function validarFormularioLogin(dados) {
+  const erros = {}
+  
+  if (!validarObrigatorio(dados.email)) {
+    erros.email = 'Email e obrigatorio'
+  } else if (!validarEmail(dados.email)) {
+    erros.email = 'Email invalido'
+  }
+  
+  if (!validarObrigatorio(dados.senha)) {
+    erros.senha = 'Senha e obrigatoria'
+  }
+  
+  return {
+    valido: Object.keys(erros).length === 0,
+    erros
+  }
+}
+
+// Conjunto de validacoes para formulario de cadastro
+export function validarFormularioCadastro(dados) {
+  const erros = {}
+  
+  if (!validarObrigatorio(dados.nome)) {
+    erros.nome = 'Nome e obrigatorio'
+  } else if (!validarComprimentoMinimo(dados.nome, VALIDACAO.NOME_MIN_LENGTH)) {
+    erros.nome = `Nome deve ter no minimo ${VALIDACAO.NOME_MIN_LENGTH} caracteres`
+  }
+  
+  if (!validarObrigatorio(dados.email)) {
+    erros.email = 'Email e obrigatorio'
+  } else if (!validarEmail(dados.email)) {
+    erros.email = 'Email invalido'
+  }
+  
+  if (!validarObrigatorio(dados.senha)) {
+    erros.senha = 'Senha e obrigatoria'
+  } else if (!validarSenhaForte(dados.senha)) {
+    erros.senha = `Senha deve ter no minimo ${VALIDACAO.SENHA_MIN_LENGTH} caracteres`
+  }
+  
+  return {
+    valido: Object.keys(erros).length === 0,
+    erros
   }
 }

@@ -1,0 +1,173 @@
+<template>
+  <div class="dashboard-page">
+    <div class="container-fluid">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+          <i class="bi bi-speedometer2 me-2"></i>
+          Dashboard
+        </h1>
+        <button class="btn btn-primary" @click="recarregar">
+          <i class="bi bi-arrow-clockwise me-2"></i>
+          Atualizar
+        </button>
+      </div>
+      
+      <!-- Cards de Estatisticas -->
+      <div class="row g-4 mb-4">
+        <div class="col-md-3">
+          <div class="stat-card card border-primary">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Total de Produtos</p>
+                  <h3 class="mb-0">{{ dashboardStore.totalProdutos }}</h3>
+                </div>
+                <i class="bi bi-box display-4 text-primary"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="stat-card card border-success">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Produtos Ativos</p>
+                  <h3 class="mb-0">{{ dashboardStore.produtosAtivos }}</h3>
+                </div>
+                <i class="bi bi-check-circle display-4 text-success"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="stat-card card border-warning">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Estoque Baixo</p>
+                  <h3 class="mb-0">{{ dashboardStore.estoqueBaixo }}</h3>
+                </div>
+                <i class="bi bi-exclamation-triangle display-4 text-warning"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-3">
+          <div class="stat-card card border-info">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1">Valor Total</p>
+                  <h3 class="mb-0">{{ formatCurrency(dashboardStore.valorTotal) }}</h3>
+                </div>
+                <i class="bi bi-currency-dollar display-4 text-info"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Graficos e Tabelas -->
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="bi bi-pie-chart me-2"></i>
+                Produtos por Categoria
+              </h5>
+            </div>
+            <div class="card-body">
+              <div v-if="dashboardStore.produtosPorCategoria.length > 0">
+                <div 
+                  v-for="item in dashboardStore.produtosPorCategoria" 
+                  :key="item.categoria"
+                  class="mb-3"
+                >
+                  <div class="d-flex justify-content-between mb-1">
+                    <span>{{ item.categoria }}</span>
+                    <strong>{{ item.total }}</strong>
+                  </div>
+                  <div class="progress">
+                    <div 
+                      class="progress-bar" 
+                      :style="{ width: calcularPorcentagem(item.total) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="text-muted">Nenhum dado disponivel</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="bi bi-clock-history me-2"></i>
+                Atividades Recentes
+              </h5>
+            </div>
+            <div class="card-body">
+              <div v-if="dashboardStore.atividadesRecentes.length > 0">
+                <div 
+                  v-for="(atividade, index) in dashboardStore.atividadesRecentes" 
+                  :key="index"
+                  class="d-flex align-items-start mb-3"
+                >
+                  <i class="bi bi-circle-fill text-primary me-2" style="font-size: 8px; margin-top: 6px;"></i>
+                  <div>
+                    <p class="mb-0">{{ atividade.produto.nome }}</p>
+                    <small class="text-muted">{{ formatRelativeTime(atividade.data) }}</small>
+                  </div>
+                </div>
+              </div>
+              <p v-else class="text-muted">Nenhuma atividade recente</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue'
+import { useDashboardStore } from '@/store/dashboard'
+import { formatCurrency, formatRelativeTime } from '@/utils/formatters'
+
+const dashboardStore = useDashboardStore()
+
+const calcularPorcentagem = (total) => {
+  const max = Math.max(...dashboardStore.produtosPorCategoria.map(p => p.total))
+  return max > 0 ? (total / max) * 100 : 0
+}
+
+const recarregar = async () => {
+  await dashboardStore.carregarTudo()
+}
+
+onMounted(async () => {
+  await dashboardStore.carregarTudo()
+})
+</script>
+
+<style scoped>
+.stat-card {
+  transition: transform var(--transition-normal);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+}
+
+.card {
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+</style>
