@@ -151,7 +151,7 @@ export default {
   
   computed: {
     formValid() {
-      return this.validator.validate(this.form) && this.validatedFields.size > 0
+      return this.validator.validate(this.form)
     }
   },
   
@@ -161,13 +161,14 @@ export default {
   
   methods: {
     setupValidation() {
-      this.validator
-        .setRules('nome', ['required', { type: 'min', value: 3 }])
-        .setRules('email', ['required', 'email'])
-        .setRules('cpf', ['required', 'cpf'])
-        .setRules('telefone', ['required'])
-        .setRules('cep', ['required'])
-        .setRules('logradouro', ['required'])
+      this.validator.setRules({
+        nome: ['required', 'min:3'],
+        email: ['required', 'email'],
+        cpf: ['required', 'cpf'],
+        telefone: ['required'],
+        cep: ['required'],
+        logradouro: ['required']
+      })
     },
     
     validateField(fieldName) {
@@ -176,15 +177,14 @@ export default {
     },
     
     hasFieldError(fieldName) {
-      return this.validator.hasFieldError(fieldName)
+      return !!this.validator.getError(fieldName)
     },
     
     getFieldError(fieldName) {
-      return this.validator.getFirstFieldError(fieldName)
+      return this.validator.getError(fieldName) || ''
     },
     
     async handleSubmit() {
-      // Validar todos os campos
       Object.keys(this.validator.rules).forEach(field => {
         this.validateField(field)
       })
@@ -197,7 +197,6 @@ export default {
       this.submitting = true
       
       try {
-        // Simular envio
         await new Promise(resolve => setTimeout(resolve, 1500))
         alert('Formulário enviado com sucesso!')
         this.resetForm()
@@ -213,7 +212,7 @@ export default {
         this.form[key] = ''
       })
       this.validatedFields.clear()
-      this.validator.clearErrors()
+      this.validator.errors = {}
     }
   }
 }
