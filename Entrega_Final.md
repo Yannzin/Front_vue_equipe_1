@@ -154,7 +154,7 @@
 - [ ] Aplicação hospedada (Netlify/Vercel) (+4 pts)
 - [ ] Documentação README completa (+2 pt)
 
-**Subtotal Bônus:** _____ / 10 (máximo)
+**Subtotal Bônus:** _____ / 20 (máximo)
 
 ---
 
@@ -181,9 +181,9 @@
 | 5. Integração com Backend | _____ / 15 |
 | 6. Qualidade do Código | _____ / 5 |
 | **Subtotal** | _____ / 100 |
-| Bônus | _____ / 10 |
+| Bônus | _____ / 20 |
 | Penalidades | _____ |
-| **TOTAL FINAL** | _____ / 110 |
+| **TOTAL FINAL** | _____ / 120 |
 
 ---
 
