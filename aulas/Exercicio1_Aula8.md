@@ -4,9 +4,6 @@
 
 Criar uma store Pinia para gerenciar preferencias do usuario (tema, idioma, notificacoes) com persistencia no localStorage.
 
-**Nivel**: Intermediario  
-**Tempo estimado**: 30 minutos
-
 ---
 
 ## Tarefa
