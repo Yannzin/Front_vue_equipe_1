@@ -1,20 +1,39 @@
-# Test 2: Store de Favoritos
+# Exercicio 2: Store de Favoritos
 
 ## Objetivo
 
-Criar um sistema completo de produtos favoritos usando Pinia, permitindo que o usuário marque/desmarque produtos como favoritos e visualize sua lista.
+Criar um sistema de produtos favoritos usando Pinia, permitindo marcar/desmarcar produtos e visualizar lista de favoritos.
+
+**Nivel**: Intermediario  
+**Tempo estimado**: 40 minutos
 
 ---
 
-## Contexto
+## Tarefa
 
-Você já conhece o básico de Pinia. Agora vamos criar uma store que se comunica com outra store (products) e persiste dados no localStorage.
+Implemente um sistema completo de favoritos que se comunica com a store de produtos.
+
+### Requisitos
+
+1. **Criar store** (`src/stores/favorites.js`):
+   - State: `favoritos` (array de IDs)
+   - Getters: `totalFavoritos`, `isFavorito(id)`, `produtosFavoritos`
+   - Actions: `adicionarFavorito()`, `removerFavorito()`, `toggleFavorito()`, `limparFavoritos()`
+   - Persistencia no localStorage
+
+2. **Atualizar ProductCard** para incluir botao de favorito
+
+3. **Criar componente FavoritesList** para exibir favoritos
+
+4. **Integrar** no App.vue com nova aba
 
 ---
 
-## Passo 1: Criar a Store de Favoritos
+## Codigo Base
 
-Crie o arquivo `src/stores/favorites.js`:
+### Store de Favoritos
+
+Crie `src/stores/favorites.js`:
 
 ```javascript
 import { defineStore } from 'pinia'
@@ -22,7 +41,7 @@ import { useProductsStore } from './products'
 
 export const useFavoritesStore = defineStore('favorites', {
   state: () => ({
-    favoritos: []  // Array de IDs dos produtos favoritos
+    favoritos: []  // Array de IDs
   }),
   
   getters: {
@@ -36,8 +55,6 @@ export const useFavoritesStore = defineStore('favorites', {
     
     produtosFavoritos() {
       const productsStore = useProductsStore()
-      
-      // Retorna objetos completos dos produtos favoritos
       return this.favoritos
         .map(id => productsStore.produtoPorId(id))
         .filter(produto => produto !== undefined)
@@ -73,54 +90,11 @@ export const useFavoritesStore = defineStore('favorites', {
     }
   },
   
-  // Persistir no localStorage
   persist: true
 })
 ```
 
-**O que fizemos**:
-
-1. **State**: Array simples de IDs (mais eficiente que objetos completos)
-2. **Getter `isFavorito`**: Retorna função que verifica se ID está nos favoritos
-3. **Getter `produtosFavoritos`**: Busca objetos completos da productsStore
-4. **Action `toggleFavorito`**: Adiciona ou remove dependendo do estado atual
-5. **`persist: true`**: Salva automaticamente no localStorage
-
----
-
-## Passo 2: Atualizar Store de Produtos (se necessário)
-
-Verifique se `src/stores/products.js` tem o getter `produtoPorId`:
-
-```javascript
-import { defineStore } from 'pinia'
-
-export const useProductsStore = defineStore('products', {
-  state: () => ({
-    produtos: [
-      { id: 1, nome: 'Notebook', preco: 2500, categoria: 'eletronicos', estoque: 10 },
-      { id: 2, nome: 'Mouse', preco: 50, categoria: 'perifericos', estoque: 50 },
-      { id: 3, nome: 'Teclado', preco: 150, categoria: 'perifericos', estoque: 30 },
-      { id: 4, nome: 'Monitor', preco: 800, categoria: 'eletronicos', estoque: 15 },
-      { id: 5, nome: 'Webcam', preco: 200, categoria: 'perifericos', estoque: 20 }
-    ]
-  }),
-  
-  getters: {
-    produtoPorId: (state) => (id) => {
-      return state.produtos.find(p => p.id === id)
-    },
-    
-    produtosDisponiveis(state) {
-      return state.produtos.filter(p => p.estoque > 0)
-    }
-  }
-})
-```
-
----
-
-## Passo 3: Criar Componente ProductCard com Favorito
+### Componente ProductCard
 
 Crie `src/components/ProductCard.vue`:
 
@@ -133,25 +107,20 @@ Crie `src/components/ProductCard.vue`:
         class="btn-favorito"
         :class="{ ativo: favoritesStore.isFavorito(produto.id) }"
         @click="favoritesStore.toggleFavorito(produto.id)"
-        :title="favoritesStore.isFavorito(produto.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
       >
-        <i class="fas fa-heart"></i>
+        ❤️
       </button>
     </div>
     
     <div class="product-body">
       <p class="categoria">{{ produto.categoria }}</p>
       <p class="preco">R$ {{ produto.preco.toFixed(2) }}</p>
-      <p class="estoque" :class="{ baixo: produto.estoque < 10 }">
-        Estoque: {{ produto.estoque }}
-      </p>
+      <p class="estoque">Estoque: {{ produto.estoque }}</p>
     </div>
     
-    <div class="product-footer">
-      <button class="btn-comprar" @click="$emit('adicionar-carrinho', produto)">
-        <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
-      </button>
-    </div>
+    <button class="btn-comprar" @click="$emit('adicionar-carrinho', produto)">
+      Adicionar ao Carrinho
+    </button>
   </div>
 </template>
 
@@ -180,13 +149,6 @@ export default {
   border-radius: 8px;
   padding: 16px;
   background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
-
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
 
 .product-header {
@@ -198,45 +160,31 @@ export default {
 
 .product-header h3 {
   margin: 0;
-  font-size: 1.2em;
+  font-size: 1.1em;
 }
 
 .btn-favorito {
   background: none;
   border: none;
   font-size: 1.5em;
-  color: #ccc;
   cursor: pointer;
-  transition: color 0.3s;
+  filter: grayscale(100%);
+  transition: filter 0.3s;
 }
 
-.btn-favorito:hover {
-  color: #ff6b6b;
-}
-
+.btn-favorito:hover,
 .btn-favorito.ativo {
-  color: #e74c3c;
-  animation: pulse 0.3s ease-in-out;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-}
-
-.product-body {
-  margin-bottom: 16px;
+  filter: grayscale(0%);
 }
 
 .categoria {
   color: #666;
   font-size: 0.9em;
   text-transform: uppercase;
-  margin: 4px 0;
 }
 
 .preco {
-  font-size: 1.5em;
+  font-size: 1.4em;
   font-weight: bold;
   color: #27ae60;
   margin: 8px 0;
@@ -247,11 +195,6 @@ export default {
   font-size: 0.9em;
 }
 
-.estoque.baixo {
-  color: #e74c3c;
-  font-weight: bold;
-}
-
 .btn-comprar {
   width: 100%;
   padding: 10px;
@@ -260,31 +203,15 @@ export default {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 1em;
-  transition: background 0.3s;
 }
 
 .btn-comprar:hover {
   background: #2980b9;
 }
-
-.btn-comprar:active {
-  transform: scale(0.98);
-}
 </style>
 ```
 
-**Destaques**:
-
-- Botão de favorito com ícone de coração
-- Classe `ativo` quando produto é favorito (muda cor)
-- Animação de pulse ao favoritar
-- Uso do getter `isFavorito` para verificar estado
-- Toggle ao clicar (adiciona ou remove)
-
----
-
-## Passo 4: Criar Lista de Favoritos
+### Componente FavoritesList
 
 Crie `src/components/FavoritesList.vue`:
 
@@ -292,24 +219,20 @@ Crie `src/components/FavoritesList.vue`:
 <template>
   <div class="favorites-list">
     <div class="header">
-      <h2>
-        <i class="fas fa-heart"></i> 
-        Meus Favoritos ({{ favoritesStore.totalFavoritos }})
-      </h2>
+      <h2>Meus Favoritos ({{ favoritesStore.totalFavoritos }})</h2>
       
       <button 
         v-if="favoritesStore.totalFavoritos > 0"
         class="btn-limpar"
         @click="favoritesStore.limparFavoritos()"
       >
-        <i class="fas fa-trash"></i> Limpar Tudo
+        Limpar Tudo
       </button>
     </div>
     
     <div v-if="favoritesStore.totalFavoritos === 0" class="empty">
-      <i class="fas fa-heart-broken fa-3x"></i>
-      <p>Você ainda não tem favoritos</p>
-      <p class="subtitle">Explore os produtos e adicione seus preferidos aqui!</p>
+      <p>Voce ainda nao tem favoritos</p>
+      <p class="subtitle">Explore os produtos e adicione seus preferidos!</p>
     </div>
     
     <div v-else class="favorites-grid">
@@ -321,9 +244,8 @@ Crie `src/components/FavoritesList.vue`:
         <button 
           class="btn-remover"
           @click="favoritesStore.removerFavorito(produto.id)"
-          title="Remover dos favoritos"
         >
-          <i class="fas fa-times"></i>
+          ✕
         </button>
         
         <h3>{{ produto.nome }}</h3>
@@ -334,7 +256,7 @@ Crie `src/components/FavoritesList.vue`:
           class="btn-adicionar"
           @click="adicionarAoCarrinho(produto)"
         >
-          <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+          Adicionar ao Carrinho
         </button>
       </div>
     </div>
@@ -375,7 +297,6 @@ export default {
 
 .header h2 {
   margin: 0;
-  color: #e74c3c;
 }
 
 .btn-limpar {
@@ -385,7 +306,6 @@ export default {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 .btn-limpar:hover {
@@ -398,18 +318,8 @@ export default {
   color: #999;
 }
 
-.empty i {
-  color: #ddd;
-  margin-bottom: 20px;
-}
-
-.empty p {
-  font-size: 1.2em;
-  margin: 8px 0;
-}
-
 .subtitle {
-  font-size: 0.9em !important;
+  font-size: 0.9em;
   color: #bbb;
 }
 
@@ -425,12 +335,6 @@ export default {
   border-radius: 8px;
   padding: 20px;
   background: #fff;
-  transition: transform 0.2s;
-}
-
-.favorite-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
 }
 
 .btn-remover {
@@ -444,7 +348,6 @@ export default {
   width: 28px;
   height: 28px;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 .btn-remover:hover {
@@ -453,14 +356,12 @@ export default {
 
 .favorite-item h3 {
   margin: 0 0 8px 0;
-  color: #333;
 }
 
 .categoria {
   color: #666;
   font-size: 0.9em;
   text-transform: uppercase;
-  margin: 4px 0;
 }
 
 .preco {
@@ -478,7 +379,6 @@ export default {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.3s;
 }
 
 .btn-adicionar:hover {
@@ -487,25 +387,14 @@ export default {
 </style>
 ```
 
-**Funcionalidades**:
-
-- Mostra total de favoritos no título
-- Estado vazio com mensagem motivacional
-- Grid responsivo de produtos favoritos
-- Botão X para remover individual
-- Botão "Limpar Tudo" com confirmação
-- Integração com carrinho de compras
-
----
-
-## Passo 5: Criar Lista de Produtos
+### Componente ProductsList
 
 Crie `src/components/ProductsList.vue`:
 
 ```vue
 <template>
   <div class="products-list">
-    <h2>Produtos Disponíveis</h2>
+    <h2>Produtos Disponiveis</h2>
     
     <div class="products-grid">
       <ProductCard
@@ -547,7 +436,6 @@ export default {
 
 .products-list h2 {
   margin-bottom: 24px;
-  color: #333;
 }
 
 .products-grid {
@@ -558,24 +446,16 @@ export default {
 </style>
 ```
 
----
-
-## Passo 6: Integrar no App.vue
-
-Atualize `src/App.vue`:
+### Integrar no App.vue
 
 ```vue
 <template>
   <div id="app">
     <header class="app-header">
-      <h1>Loja Virtual</h1>
+      <h1>Loja Virtual - Aula 8: Pinia</h1>
       <div class="header-stats">
-        <span class="stat">
-          <i class="fas fa-heart"></i> {{ favoritesStore.totalFavoritos }}
-        </span>
-        <span class="stat">
-          <i class="fas fa-shopping-cart"></i> {{ cartStore.totalItems }}
-        </span>
+        <span class="stat">❤️ {{ favoritesStore.totalFavoritos }}</span>
+        <span class="stat">🛒 {{ cartStore.totalItems }}</span>
       </div>
     </header>
     
@@ -584,19 +464,25 @@ Atualize `src/App.vue`:
         :class="{ active: abaAtiva === 'produtos' }"
         @click="abaAtiva = 'produtos'"
       >
-        <i class="fas fa-store"></i> Produtos
+        Produtos
       </button>
       <button 
         :class="{ active: abaAtiva === 'favoritos' }"
         @click="abaAtiva = 'favoritos'"
       >
-        <i class="fas fa-heart"></i> Favoritos
+        Favoritos
       </button>
       <button 
         :class="{ active: abaAtiva === 'carrinho' }"
         @click="abaAtiva = 'carrinho'"
       >
-        <i class="fas fa-shopping-cart"></i> Carrinho
+        Carrinho
+      </button>
+      <button 
+        :class="{ active: abaAtiva === 'usuario' }"
+        @click="abaAtiva = 'usuario'"
+      >
+        Usuario
       </button>
     </nav>
     
@@ -604,6 +490,7 @@ Atualize `src/App.vue`:
       <ProductsList v-if="abaAtiva === 'produtos'" />
       <FavoritesList v-if="abaAtiva === 'favoritos'" />
       <ShoppingCart v-if="abaAtiva === 'carrinho'" />
+      <UserProfile v-if="abaAtiva === 'usuario'" />
     </main>
   </div>
 </template>
@@ -614,13 +501,15 @@ import { useCartStore } from '@/stores/cart'
 import ProductsList from '@/components/ProductsList.vue'
 import FavoritesList from '@/components/FavoritesList.vue'
 import ShoppingCart from '@/components/ShoppingCart.vue'
+import UserProfile from '@/components/UserProfile.vue'
 
 export default {
   name: 'App',
   components: {
     ProductsList,
     FavoritesList,
-    ShoppingCart
+    ShoppingCart,
+    UserProfile
   },
   setup() {
     const favoritesStore = useFavoritesStore()
@@ -636,93 +525,18 @@ export default {
 </script>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #f5f5f5;
-}
-
-#app {
-  min-height: 100vh;
-}
-
-.app-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.app-header h1 {
-  margin: 0;
-  font-size: 2em;
-}
-
-.header-stats {
-  display: flex;
-  gap: 20px;
-}
-
-.stat {
-  background: rgba(255,255,255,0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 1.1em;
-}
-
-.tabs {
-  display: flex;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.tabs button {
-  flex: 1;
-  padding: 16px;
-  border: none;
-  background: white;
-  cursor: pointer;
-  font-size: 1em;
-  transition: all 0.3s;
-  border-bottom: 3px solid transparent;
-}
-
-.tabs button:hover {
-  background: #f8f9fa;
-}
-
-.tabs button.active {
-  color: #667eea;
-  border-bottom-color: #667eea;
-  font-weight: bold;
-}
-
-.app-main {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
+/* Estilos existentes do App.vue */
 </style>
 ```
 
 ---
 
-## Passo 7: Testar
+## Teste
 
-1. Salve todos os arquivos
-2. Certifique-se de que o Pinia está configurado no `main.js`
-3. Execute `npm run dev`
-4. Teste as funcionalidades:
-   - Clique no coração nos cards de produto
-   - Veja o contador de favoritos no header aumentar
-   - Navegue para aba "Favoritos"
-   - Remova favoritos individualmente ou todos de uma vez
-   - Recarregue a página (favoritos devem persistir)
+1. Execute `npm run dev`
+2. Navegue para aba "Produtos"
+3. Clique no coracao nos cards de produto
+4. Veja contador de favoritos no header aumentar
+5. Navegue para aba "Favoritos"
+6. Remova favoritos individualmente ou todos
+7. Recarregue a pagina - favoritos devem persistir

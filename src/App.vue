@@ -11,6 +11,12 @@
     
     <nav class="tabs">
       <button 
+        :class="{ active: abaAtiva === 'produtos' }"
+        @click="abaAtiva = 'produtos'"
+      >
+        🏪 Produtos
+      </button>
+      <button 
         :class="{ active: abaAtiva === 'carrinho' }"
         @click="abaAtiva = 'carrinho'"
       >
@@ -25,6 +31,7 @@
     </nav>
     
     <main class="app-main">
+      <ProductsList v-if="abaAtiva === 'produtos'" />
       <ShoppingCart v-if="abaAtiva === 'carrinho'" />
       <UserProfile v-if="abaAtiva === 'usuario'" />
     </main>
@@ -33,12 +40,14 @@
 
 <script>
 import { useCartStore } from '@/stores/cart'
+import ProductsList from '@/components/ProductsList.vue'
 import ShoppingCart from '@/components/ShoppingCart.vue'
 import UserProfile from '@/components/UserProfile.vue'
 
 export default {
   name: 'App',
   components: {
+    ProductsList,
     ShoppingCart,
     UserProfile
   },
@@ -48,7 +57,7 @@ export default {
   },
   data() {
     return {
-      abaAtiva: 'carrinho'
+      abaAtiva: 'produtos'
     }
   }
 }
