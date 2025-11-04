@@ -1,10 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 import App from './App.vue'
 import './style.css'
 
 // Criar Pinia (gerenciador de estado)
 const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
 
 // Criar e montar a aplicação Vue
 const app = createApp(App)

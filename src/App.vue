@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" :class="temaClass">
     <header class="app-header">
       <h1>Loja Virtual - Aula 8: Pinia</h1>
       <div class="header-stats">
@@ -28,36 +28,53 @@
       >
         👤 Usuário
       </button>
+      <button 
+        :class="{ active: abaAtiva === 'config' }"
+        @click="abaAtiva = 'config'"
+      >
+        ⚙️ Configurações
+      </button>
     </nav>
     
     <main class="app-main">
       <ProductsList v-if="abaAtiva === 'produtos'" />
       <ShoppingCart v-if="abaAtiva === 'carrinho'" />
       <UserProfile v-if="abaAtiva === 'usuario'" />
+      <SettingsPanel v-if="abaAtiva === 'config'" />
     </main>
   </div>
 </template>
 
 <script>
 import { useCartStore } from '@/stores/cart'
+import { useSettingsStore } from '@/stores/settings'
+
 import ProductsList from '@/components/ProductsList.vue'
 import ShoppingCart from '@/components/ShoppingCart.vue'
 import UserProfile from '@/components/UserProfile.vue'
+import SettingsPanel from '@/components/SettingsPanel.vue'
 
 export default {
   name: 'App',
   components: {
     ProductsList,
     ShoppingCart,
-    UserProfile
+    UserProfile,
+    SettingsPanel
   },
   setup() {
     const cartStore = useCartStore()
-    return { cartStore }
+    const settingsStore = useSettingsStore()
+    return { cartStore, settingsStore }
   },
   data() {
     return {
       abaAtiva: 'produtos'
+    }
+  },
+  computed: {
+    temaClass() {
+      return `tema-${this.settingsStore.tema}`
     }
   }
 }
@@ -137,5 +154,41 @@ body {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+}
+
+/* Tema Claro */
+#app.tema-claro {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+/* Tema Escuro */
+#app.tema-escuro {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+#app.tema-escuro .app-header {
+  background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+}
+
+#app.tema-escuro .settings-panel,
+#app.tema-escuro .shopping-cart,
+#app.tema-escuro .user-profile {
+  background-color: #2d2d2d;
+  border-color: #444;
+  color: #e0e0e0;
+}
+
+#app.tema-escuro input,
+#app.tema-escuro select {
+  background-color: #3d3d3d;
+  border-color: #555;
+  color: #e0e0e0;
+}
+
+#app.tema-escuro .preview {
+  background-color: #3d3d3d;
 }
 </style>
