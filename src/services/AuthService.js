@@ -5,8 +5,13 @@ export class AuthService {
     try {
       const response = await api.post('/login', credentials)
       const { access_token, user } = response.data
+      
       localStorage.setItem('authToken', access_token)
       localStorage.setItem('userData', JSON.stringify(user))
+      
+      const totalLogins = parseInt(localStorage.getItem('total_logins') || '0')
+      localStorage.setItem('total_logins', (totalLogins + 1).toString())
+      
       return {
         sucesso: true,
         token: access_token,
@@ -43,11 +48,6 @@ export class AuthService {
   static logout() {
     localStorage.removeItem('authToken')
     localStorage.removeItem('userData')
-    window.location.href = '/'
-    return {
-      sucesso: true,
-      mensagem: 'Logout realizado com sucesso!'
-    }
   }
 
   static isAuthenticated() {
@@ -95,6 +95,26 @@ export class AuthService {
       }
     }
   }
+  
+  static async atualizarPerfil(dados) {
+    try {
+      const response = await api.put('/api/perfil', dados)
+      const usuario = response.data.user
+      localStorage.setItem('userData', JSON.stringify(usuario))
+      
+      return {
+        sucesso: true,
+        usuario: usuario,
+        mensagem: response.data.message || 'Perfil atualizado com sucesso'
+      }
+    } catch (error) {
+      return {
+        sucesso: false,
+        usuario: null,
+        mensagem: this.tratarErroAuth(error)
+      }
+    }
+  }
 
   static parseJWT(token) {
     const base64Url = token.split('.')[1]
@@ -120,6 +140,9 @@ export class AuthService {
         case 403:
           return 'Acesso negado. Verifique suas permissões.'
         case 422:
+          if (data.message && data.message.includes('Email ja registrado')) {
+            return data.message
+          }
           return data.message || 'Dados de cadastro inválidos.'
         case 429:
           return 'Muitas tentativas. Tente novamente em alguns minutos.'

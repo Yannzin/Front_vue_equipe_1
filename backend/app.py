@@ -1,255 +1,190 @@
+# Importações necessárias:
 from flask import Flask, request, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 from flask_cors import CORS
+from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import timedelta
+import datetime
 import os
-from dotenv import load_dotenv
+import traceback # Importação adicionada para melhor rastreamento de erro
 
-load_dotenv()
-
+# Configuração
 app = Flask(__name__)
-
-# Configuracoes
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///usuarios.db')
-app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'chave-muito-secreta')
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600)))
-
-# Inicializar extensoes
-db = SQLAlchemy(app)
-jwt = JWTManager(app)
 CORS(app)
 
-# =====================
-# HANDLERS JWT
-# =====================
+# Configuração do banco de dados SQLite
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///auth_aula.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
-@jwt.invalid_token_loader
-def invalid_token_callback(error):
-    print(f'[DEBUG] Invalid token: {str(error)}')
-    return jsonify({'message': 'Token invalido ou expirado'}), 401
+# Configuração do JWT
+app.config['JWT_SECRET_KEY'] = 'uma-chave-secreta-forte-para-jwt' 
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = datetime.timedelta(days=1)
+jwt = JWTManager(app)
 
-@jwt.unauthorized_loader
-def missing_token_callback(error):
-    print(f'[DEBUG] Missing token: {str(error)}')
-    return jsonify({'message': 'Token de autorizacao nao fornecido'}), 401
-
-@jwt.expired_token_loader
-def expired_token_callback(jwt_header, jwt_data):
-    print(f'[DEBUG] Token expirado')
-    return jsonify({'message': 'Token expirado'}), 401
-
-# =====================
-# MODELS
-# =====================
+# ==============================================================================
+# Modelo de Dados
+# ==============================================================================
 
 class Usuario(db.Model):
-    __tablename__ = 'usuarios'
-    
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(120), nullable=False)
+    nome = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    senha = db.Column(db.String(255), nullable=False)
-    data_criacao = db.Column(db.DateTime, default=db.func.now())
-    
-    def set_password(self, senha):
-        """Hash da senha antes de armazenar"""
-        self.senha = generate_password_hash(senha)
-    
-    def check_password(self, senha):
-        """Verifica se a senha fornecida corresponde ao hash armazenado"""
-        return check_password_hash(self.senha, senha)
-    
+    senha_hash = db.Column(db.String(128), nullable=False)
+    data_criacao = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    def set_senha(self, senha):
+        self.senha_hash = generate_password_hash(senha)
+
+    def check_senha(self, senha):
+        return check_password_hash(self.senha_hash, senha)
+
     def to_dict(self):
-        """Converte usuario para dicionario (sem expor a senha)"""
+        """Retorna uma representação de dicionário do usuário, omitindo a senha."""
         return {
             'id': self.id,
             'nome': self.nome,
             'email': self.email,
-            'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None
+            # Formato ISO string para fácil conversão em JS
+            'data_criacao': self.data_criacao.isoformat() 
         }
 
-# =====================
-# ROTAS DE AUTENTICACAO
-# =====================
+# ==============================================================================
+# Endpoints de Autenticação (Login e Cadastro)
+# ==============================================================================
 
 @app.route('/login', methods=['POST'])
 def login():
-    """
-    Endpoint para login do usuario.
-    
-    Request JSON:
-    {
-        "email": "prof@admin.com",
-        "senha": "admin123"
-    }
-    
-    Response (sucesso):
-    {
-        "access_token": "eyJ0eXAiOiJKV1QiLC...",
-        "user": {
-            "id": 1,
-            "nome": "Prof Admin",
-            "email": "prof@admin.com"
-        }
-    }
-    
-    Response (erro 401):
-    {
-        "message": "Email ou senha incorretos."
-    }
-    """
-    try:
-        dados = request.get_json()
-        
-        if not dados or not dados.get('email') or not dados.get('senha'):
-            return jsonify({'message': 'Email e senha sao obrigatorios'}), 400
-        
-        usuario = Usuario.query.filter_by(email=dados['email']).first()
-        
-        if not usuario or not usuario.check_password(dados['senha']):
-            return jsonify({'message': 'Email ou senha incorretos.'}), 401
-        
-        # Gerar JWT token
-        access_token = create_access_token(identity=str(usuario.id))
-        
+    dados = request.get_json()
+    email = dados.get('email')
+    senha = dados.get('senha')
+
+    if not email or not senha:
+        return jsonify({'message': 'Email e senha são obrigatórios'}), 400
+
+    usuario = Usuario.query.filter_by(email=email).first()
+
+    if usuario and usuario.check_senha(senha):
+        # Cria um token JWT usando o ID do usuário como identidade
+        access_token = create_access_token(identity=usuario.id)
         return jsonify({
+            'message': 'Login bem-sucedido',
             'access_token': access_token,
             'user': usuario.to_dict()
         }), 200
     
-    except Exception as e:
-        print(f'Erro no login: {str(e)}')
-        return jsonify({'message': 'Erro interno do servidor'}), 500
-
+    return jsonify({'message': 'Email ou senha inválidos'}), 401
 
 @app.route('/form', methods=['POST'])
-def cadastro():
-    """
-    Endpoint para cadastro de novo usuario.
-    
-    Request JSON:
-    {
-        "nome": "Aluno User",
-        "email": "aluno@user.com",
-        "senha": "user123"
-    }
-    
-    Response (sucesso):
-    {
-        "message": "Usuario criado com sucesso",
-        "user": {
-            "id": 2,
-            "nome": "Aluno User",
-            "email": "aluno@user.com"
-        }
-    }
-    
-    Response (erro 422):
-    {
-        "message": "Email ja registrado"
-    }
-    """
+def cadastrar_usuario():
+    dados = request.get_json()
+    nome = dados.get('nome')
+    email = dados.get('email')
+    senha = dados.get('senha')
+
+    if not nome or len(nome) < 2:
+        return jsonify({'message': 'Nome deve ter pelo menos 2 caracteres'}), 422
+    if not email or not senha:
+        return jsonify({'message': 'Email e senha são obrigatórios'}), 422
+
+    if Usuario.query.filter_by(email=email).first():
+        return jsonify({'message': 'Email já registrado'}), 422
+
+    novo_usuario = Usuario(nome=nome, email=email)
+    novo_usuario.set_senha(senha)
+
     try:
-        dados = request.get_json()
-        
-        if not dados or not dados.get('nome') or not dados.get('email') or not dados.get('senha'):
-            return jsonify({'message': 'Nome, email e senha sao obrigatorios'}), 400
-        
-        if len(dados['senha']) < 6:
-            return jsonify({'message': 'Senha deve ter pelo menos 6 caracteres'}), 400
-        
-        if Usuario.query.filter_by(email=dados['email']).first():
-            return jsonify({'message': 'Email ja registrado'}), 422
-        
-        novo_usuario = Usuario(
-            nome=dados['nome'],
-            email=dados['email']
-        )
-        novo_usuario.set_password(dados['senha'])
-        
         db.session.add(novo_usuario)
         db.session.commit()
-        
-        return jsonify({
-            'message': 'Usuario criado com sucesso',
-            'user': novo_usuario.to_dict()
-        }), 201
-    
+        return jsonify({'message': 'Usuário criado com sucesso!'}), 201
     except Exception as e:
         db.session.rollback()
-        print(f'Erro no cadastro: {str(e)}')
-        return jsonify({'message': 'Erro ao criar usuario'}), 500
+        print(f'Erro ao cadastrar: {e}')
+        return jsonify({'message': 'Erro ao registrar usuário'}), 500
 
+# ==============================================================================
+# Endpoints Protegidos
+# ==============================================================================
 
 @app.route('/api/perfil', methods=['GET'])
 @jwt_required(locations=["headers"])
 def obter_perfil():
-    """
-    Endpoint protegido para obter dados do perfil do usuario logado.
-    Requer token JWT no header Authorization: Bearer <token>
+    """Endpoint protegido para obter dados do perfil do usuario logado."""
+    usuario_id = get_jwt_identity()
+    usuario = Usuario.query.get(int(usuario_id))
     
-    Response:
-    {
-        "id": 1,
-        "nome": "Prof Admin",
-        "email": "prof@admin.com",
-        "data_criacao": "2025-10-24T10:30:00"
-    }
+    if not usuario:
+        return jsonify({'message': 'Usuario nao encontrado'}), 404
+    
+    return jsonify(usuario.to_dict()), 200
+
+# Endpoint PUT /api/perfil (Para Edição)
+@app.route('/api/perfil', methods=['PUT'])
+@jwt_required(locations=["headers"])
+def atualizar_perfil():
+    """
+    Endpoint protegido para atualizar dados do perfil do usuario logado.
+    Requer token JWT no header Authorization: Bearer <token>
     """
     try:
-        # Debug: verificar token
-        auth_header = request.headers.get('Authorization', 'Nao fornecido')
-        print(f'[DEBUG] Authorization header: {auth_header[:50]}...' if len(auth_header) > 50 else f'[DEBUG] Authorization header: {auth_header}')
-        
         usuario_id = get_jwt_identity()
-        print(f'[DEBUG] JWT identity extraido: {usuario_id}')
-        
         usuario = Usuario.query.get(int(usuario_id))
         
         if not usuario:
             return jsonify({'message': 'Usuario nao encontrado'}), 404
         
-        return jsonify(usuario.to_dict()), 200
+        dados = request.get_json()
+        
+        if not dados:
+            return jsonify({'message': 'Dados invalidos'}), 400
+        
+        # Validar e atualizar nome
+        if 'nome' in dados:
+            if not dados['nome'] or len(dados['nome']) < 2:
+                return jsonify({'message': 'Nome deve ter pelo menos 2 caracteres'}), 400
+            usuario.nome = dados['nome']
+        
+        # Validar e atualizar email
+        if 'email' in dados:
+            novo_email = dados['email']
+            if not novo_email:
+                return jsonify({'message': 'Email eh obrigatorio'}), 400
+            
+            # Verificar se email ja existe (exceto o proprio usuario)
+            usuario_existente = Usuario.query.filter_by(email=novo_email).first()
+            if usuario_existente and usuario_existente.id != usuario.id:
+                return jsonify({'message': 'Email ja registrado por outro usuario'}), 422
+            
+            usuario.email = novo_email
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Perfil atualizado com sucesso',
+            'user': usuario.to_dict()
+        }), 200
     
     except Exception as e:
-        print(f'Erro ao obter perfil: {str(e)}')
-        import traceback
+        db.session.rollback()
+        print(f'Erro ao atualizar perfil: {str(e)}')
         traceback.print_exc()
-        return jsonify({'message': 'Erro ao obter perfil'}), 500
+        return jsonify({'message': 'Erro ao atualizar perfil'}), 500
 
 
-# =====================
-# ROTA DE TESTE
-# =====================
+# ==============================================================================
+# Funções Auxiliares (Para seed.py)
+# ==============================================================================
 
-@app.route('/health', methods=['GET'])
-def health():
-    """Endpoint para verificar se o servidor esta rodando"""
-    return jsonify({'status': 'ok', 'message': 'Backend Flask rodando'}), 200
+def init_db():
+    """Cria o banco de dados e a tabela se não existirem."""
+    if not os.path.exists('auth_aula.db'):
+        with app.app_context():
+            db.create_all()
+            print("Banco de dados criado.")
 
-
-# =====================
-# MANIPULADORES DE ERRO
-# =====================
-
-@app.errorhandler(404)
-def nao_encontrado(error):
-    return jsonify({'message': 'Recurso nao encontrado'}), 404
-
-
-@app.errorhandler(500)
-def erro_interno(error):
-    return jsonify({'message': 'Erro interno do servidor'}), 500
-
-
-# =====================
-# CRIAR BANCO DE DADOS E EXECUTAR APP
-# =====================
-
+# Chamada principal para rodar o Flask
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # init_db() # Não chame aqui se estiver usando seed.py
+    app.run(debug=True)

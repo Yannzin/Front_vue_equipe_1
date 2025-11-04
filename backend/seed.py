@@ -86,7 +86,7 @@ def seed_database():
                     nome=dados['nome'],
                     email=dados['email']
                 )
-                usuario.set_password(dados['senha'])
+                usuario.set_senha(dados['senha'])
                 db.session.add(usuario)
                 print(f"  + {dados['nome']} ({dados['email']})")
             
