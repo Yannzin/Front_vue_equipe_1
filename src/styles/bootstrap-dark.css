@@ -15,7 +15,7 @@
 }
 
 [data-theme="dark"] .card-body {
-  color: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 /* Tabelas no tema escuro */
