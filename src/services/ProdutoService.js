@@ -1,11 +1,11 @@
-// Servico de Produtos
-// Gerencia CRUD de produtos
+// Serviço de Carros
+// Gerencia CRUD de carros
 
 import { get, post, put, del } from './api'
 
-class ProdutoService {
-  // Listar todos os produtos com filtros
-  async listarProdutos(filtros = {}) {
+class CarroService {
+  // Listar todos os carros com filtros
+  async listarCarros(filtros = {}) {
     try {
       const params = new URLSearchParams()
       
@@ -30,7 +30,7 @@ class ProdutoService {
       }
       
       const queryString = params.toString()
-      const url = queryString ? `/api/produtos?${queryString}` : '/api/produtos'
+      const url = queryString ? `/api/carros?${queryString}` : '/api/carros'
       
       const response = await get(url)
       return response.data
@@ -39,40 +39,40 @@ class ProdutoService {
     }
   }
   
-  // Buscar produto por ID
-  async buscarProduto(id) {
+  // Buscar carro por ID
+  async buscarCarro(id) {
     try {
-      const response = await get(`/api/produtos/${id}`)
+      const response = await get(`/api/carros/${id}`)
       return response.data
     } catch (error) {
       throw error
     }
   }
   
-  // Criar novo produto
-  async criarProduto(dados) {
+  // Criar novo carro
+  async criarCarro(dados) {
     try {
-      const response = await post('/api/produtos', dados)
+      const response = await post('/api/carros', dados)
       return response.data
     } catch (error) {
       throw error
     }
   }
   
-  // Atualizar produto existente
-  async atualizarProduto(id, dados) {
+  // Atualizar carro existente
+  async atualizarCarro(id, dados) {
     try {
-      const response = await put(`/api/produtos/${id}`, dados)
+      const response = await put(`/api/carros/${id}`, dados)
       return response.data
     } catch (error) {
       throw error
     }
   }
   
-  // Deletar produto
-  async deletarProduto(id) {
+  // Deletar carro
+  async deletarCarro(id) {
     try {
-      const response = await del(`/api/produtos/${id}`)
+      const response = await del(`/api/carros/${id}`)
       return response.data
     } catch (error) {
       throw error
@@ -82,7 +82,7 @@ class ProdutoService {
   // Alternar status ativo/inativo
   async alternarAtivo(id, ativo) {
     try {
-      const response = await put(`/api/produtos/${id}`, { ativo })
+      const response = await put(`/api/carros/${id}`, { ativo })
       return response.data
     } catch (error) {
       throw error
@@ -90,4 +90,4 @@ class ProdutoService {
   }
 }
 
-export default new ProdutoService()
+export default new CarroService()

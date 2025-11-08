@@ -1,27 +1,30 @@
 /**
- * Constantes da aplicacao
- * Centralize todos os valores fixos aqui para facilitar manutencao
+ * Constantes da aplicação
+ * Centralize todos os valores fixos aqui para facilitar manutenção
  */
 
-// Categorias de produtos
+// Categorias de carros
 export const CATEGORIAS = [
-  'Eletronicos',
-  'Livros',
-  'Escritorio',
-  'Acessorios',
-  'Cursos',
+  'SUV',
+  'Sedan',
+  'Hatch',
+  'Pickup',
+  'Esportivo',
+  'Conversível',
+  'Crossover',
+  'Minivan',
   'Outros'
 ]
 
-// Status de estoque
+// Status de estoque (ex: quantidade disponível em estoque físico)
 export const STATUS_ESTOQUE = {
-  CRITICO: { valor: 5, label: 'Critico', cor: 'danger' },
-  BAIXO: { valor: 10, label: 'Baixo', cor: 'warning' },
-  NORMAL: { valor: 20, label: 'Normal', cor: 'success' },
+  CRITICO: { valor: 1, label: 'Crítico', cor: 'danger' },
+  BAIXO: { valor: 3, label: 'Baixo', cor: 'warning' },
+  NORMAL: { valor: 10, label: 'Normal', cor: 'success' },
   ALTO: { valor: Infinity, label: 'Alto', cor: 'primary' }
 }
 
-// Tipos de notificacao (toast)
+// Tipos de notificação (toast)
 export const TOAST_TYPES = {
   SUCCESS: 'success',
   ERROR: 'danger',
@@ -29,60 +32,62 @@ export const TOAST_TYPES = {
   INFO: 'info'
 }
 
-// Duracao padrao dos toasts (ms)
+// Duração padrão dos toasts (ms)
 export const TOAST_DURATION = {
   SHORT: 2000,
   MEDIUM: 3000,
   LONG: 5000
 }
 
-// Opcoes de ordenacao para produtos
-export const ORDENACAO_PRODUTOS = [
-  { valor: 'nome', label: 'Nome' },
-  { valor: 'preco', label: 'Preco' },
-  { valor: 'data_criacao', label: 'Data' },
-  { valor: 'estoque', label: 'Estoque' }
+// Opções de ordenação para carros
+export const ORDENACAO_CARROS = [
+  { valor: 'marca', label: 'Marca' },
+  { valor: 'modelo', label: 'Modelo' },
+  { valor: 'ano', label: 'Ano' },
+  { valor: 'preco', label: 'Preço' },
+  { valor: 'quilometragem', label: 'Quilometragem' },
+  { valor: 'data_criacao', label: 'Data de Cadastro' }
 ]
 
-// Opcoes de direcao de ordenacao
+// Opções de direção de ordenação
 export const DIRECAO_ORDENACAO = [
   { valor: 'asc', label: 'Crescente' },
   { valor: 'desc', label: 'Decrescente' }
 ]
 
-// Faixas de preco para filtros
+// Faixas de preço para filtros de carros
 export const FAIXAS_PRECO = [
   { label: 'Todos', min: 0, max: Infinity },
-  { label: 'Ate R$ 100', min: 0, max: 100 },
-  { label: 'R$ 100 - R$ 500', min: 100, max: 500 },
-  { label: 'R$ 500 - R$ 1000', min: 500, max: 1000 },
-  { label: 'Acima de R$ 1000', min: 1000, max: Infinity }
+  { label: 'Até R$ 50.000', min: 0, max: 50000 },
+  { label: 'R$ 50.000 - R$ 100.000', min: 50000, max: 100000 },
+  { label: 'R$ 100.000 - R$ 200.000', min: 100000, max: 200000 },
+  { label: 'Acima de R$ 200.000', min: 200000, max: Infinity }
 ]
 
-// Regras de validacao
+// Regras de validação
 export const VALIDACAO = {
   SENHA_MIN_LENGTH: 6,
   NOME_MIN_LENGTH: 3,
   PRECO_MIN: 0,
-  PRECO_MAX: 999999.99,
+  PRECO_MAX: 9999999.99,
   ESTOQUE_MIN: 0,
-  ESTOQUE_MAX: 999999,
-  DESCRICAO_MAX_LENGTH: 500
+  ESTOQUE_MAX: 9999,
+  DESCRICAO_MAX_LENGTH: 1000
 }
 
-// Configuracoes de paginacao
+// Configurações de paginação
 export const PAGINACAO = {
-  PRODUTOS_POR_PAGINA: 12,
+  CARROS_POR_PAGINA: 10,
   ATIVIDADES_POR_PAGINA: 10
 }
 
-// Temas disponiveis
+// Temas disponíveis
 export const TEMAS = {
   LIGHT: 'light',
   DARK: 'dark'
 }
 
-// Rotas que nao precisam de autenticacao
+// Rotas públicas (sem autenticação obrigatória)
 export const ROTAS_PUBLICAS = [
   '/login',
   '/sobre'
@@ -95,43 +100,46 @@ export const STORAGE_KEYS = {
   THEME: 'app_theme'
 }
 
-// Mensagens de erro padrao
+// Mensagens de erro padrão
 export const MENSAGENS_ERRO = {
   ERRO_GENERICO: 'Ocorreu um erro. Tente novamente.',
-  ERRO_AUTENTICACAO: 'Email ou senha invalidos.',
-  ERRO_SESSAO_EXPIRADA: 'Sua sessao expirou. Faca login novamente.',
-  ERRO_PERMISSAO: 'Voce nao tem permissao para esta acao.',
-  ERRO_CONEXAO: 'Erro de conexao. Verifique sua internet.',
+  ERRO_AUTENTICACAO: 'Email ou senha inválidos.',
+  ERRO_SESSAO_EXPIRADA: 'Sua sessão expirou. Faça login novamente.',
+  ERRO_PERMISSAO: 'Você não tem permissão para esta ação.',
+  ERRO_CONEXAO: 'Erro de conexão. Verifique sua internet.',
   ERRO_SERVIDOR: 'Erro no servidor. Tente novamente mais tarde.',
-  CAMPO_OBRIGATORIO: 'Este campo e obrigatorio.',
-  EMAIL_INVALIDO: 'Email invalido.',
-  SENHA_FRACA: 'Senha deve ter no minimo 6 caracteres.',
-  PRECO_INVALIDO: 'Preco deve ser um numero positivo.',
-  ESTOQUE_INVALIDO: 'Estoque deve ser um numero inteiro positivo.'
+  CAMPO_OBRIGATORIO: 'Este campo é obrigatório.',
+  EMAIL_INVALIDO: 'Email inválido.',
+  SENHA_FRACA: 'Senha deve ter no mínimo 6 caracteres.',
+  PRECO_INVALIDO: 'Preço deve ser um número positivo.',
+  ESTOQUE_INVALIDO: 'Estoque deve ser um número inteiro positivo.'
 }
 
-// Mensagens de sucesso padrao
+// Mensagens de sucesso padrão
 export const MENSAGENS_SUCESSO = {
   LOGIN_SUCESSO: 'Login realizado com sucesso!',
   LOGOUT_SUCESSO: 'Logout realizado com sucesso!',
   CADASTRO_SUCESSO: 'Cadastro realizado com sucesso!',
-  PRODUTO_CRIADO: 'Produto criado com sucesso!',
-  PRODUTO_ATUALIZADO: 'Produto atualizado com sucesso!',
-  PRODUTO_DELETADO: 'Produto deletado com sucesso!',
+  CARRO_CRIADO: 'Carro cadastrado com sucesso!',
+  CARRO_ATUALIZADO: 'Carro atualizado com sucesso!',
+  CARRO_DELETADO: 'Carro removido com sucesso!',
   PERFIL_ATUALIZADO: 'Perfil atualizado com sucesso!'
 }
 
-// Icones do Bootstrap Icons para cada categoria
+// Ícones do Bootstrap Icons para cada categoria de carro
 export const ICONES_CATEGORIA = {
-  'Eletronicos': 'bi-laptop',
-  'Livros': 'bi-book',
-  'Escritorio': 'bi-briefcase',
-  'Acessorios': 'bi-gear',
-  'Cursos': 'bi-mortarboard',
+  'SUV': 'bi-truck',
+  'Sedan': 'bi-car-front',
+  'Hatch': 'bi-car-front-fill',
+  'Pickup': 'bi-truck-flatbed',
+  'Esportivo': 'bi-lightning-charge',
+  'Conversível': 'bi-wind',
+  'Crossover': 'bi-car-front',
+  'Minivan': 'bi-bus-front',
   'Outros': 'bi-box'
 }
 
-// Cores para graficos
+// Cores para gráficos
 export const CORES_GRAFICO = [
   '#0d6efd', // primary
   '#6c757d', // secondary
