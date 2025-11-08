@@ -1,27 +1,27 @@
 <template>
-  <div class="produtos-page">
+  <div class="page-container">
     <div class="container-fluid">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>
-          <i class="bi bi-box me-2"></i>
-          Produtos
+      <div class="page-header mb-5">
+        <h1 class="page-title">
+          <i class="bi bi-car-front-fill me-3"></i>
+          Carros
         </h1>
-        <router-link to="/produtos/novo" class="btn btn-primary">
-          <i class="bi bi-plus-circle me-2"></i>
-          Novo Produto
+        
+        <router-link to="/produtos/novo" class="btn custom-new-button">
+          <i class="bi bi-plus-lg me-2"></i>
+          Novo Carro
         </router-link>
       </div>
       
-      <!-- Filtros -->
-      <div class="card mb-4">
+      <div class="card mb-4 filter-card"> 
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
               <input 
                 v-model="filtros.busca"
                 type="text" 
-                class="form-control" 
-                placeholder="Buscar produtos..."
+                class="form-control custom-input" 
+                placeholder="Buscar carros..."
                 @input="aplicarFiltros"
               >
             </div>
@@ -29,7 +29,7 @@
             <div class="col-md-3">
               <select 
                 v-model="filtros.categoria" 
-                class="form-select"
+                class="form-select custom-input"
                 @change="aplicarFiltros"
               >
                 <option value="">Todas as categorias</option>
@@ -42,7 +42,7 @@
             <div class="col-md-2">
               <select 
                 v-model="filtros.ordenar" 
-                class="form-select"
+                class="form-select custom-input"
                 @change="aplicarFiltros"
               >
                 <option value="data_criacao">Data</option>
@@ -54,7 +54,7 @@
             <div class="col-md-2">
               <select 
                 v-model="filtros.ordem" 
-                class="form-select"
+                class="form-select custom-input"
                 @change="aplicarFiltros"
               >
                 <option value="desc">Decrescente</option>
@@ -63,7 +63,7 @@
             </div>
             
             <div class="col-md-1">
-              <button class="btn btn-outline-secondary w-100" @click="limparFiltros">
+              <button class="btn btn-outline-secondary custom-reset-btn w-100" @click="limparFiltros">
                 <i class="bi bi-x-circle"></i>
               </button>
             </div>
@@ -71,15 +71,14 @@
         </div>
       </div>
       
-      <!-- Lista de Produtos -->
       <div v-if="produtosStore.carregando" class="text-center py-5">
         <div class="spinner-border text-primary"></div>
-        <p class="mt-3">Carregando produtos...</p>
+        <p class="text-white-50 mt-3">Carregando carros...</p>
       </div>
       
       <div v-else-if="produtosStore.produtos.length === 0" class="text-center py-5">
         <i class="bi bi-inbox display-1 text-muted"></i>
-        <p class="text-muted mt-3">Nenhum produto encontrado</p>
+        <p class="text-white-50 mt-3">Nenhum carro encontrado</p>
       </div>
       
       <div v-else class="row g-4">
@@ -88,7 +87,7 @@
           :key="produto.id"
           class="col-md-4 col-lg-3"
         >
-          <div class="card h-100 produto-card">
+          <div class="card h-100 produto-card item-card">
             <img 
               :src="produto.imagem_url || 'https://via.placeholder.com/300x200'" 
               class="card-img-top" 
@@ -96,8 +95,8 @@
               style="height: 200px; object-fit: cover;"
             >
             <div class="card-body">
-              <h5 class="card-title">{{ produto.nome }}</h5>
-              <p class="card-text text-muted small">{{ truncateText(produto.descricao, 80) }}</p>
+              <h5 class="card-title item-title">{{ produto.nome }}</h5>
+              <p class="card-text item-text small">{{ truncateText(produto.descricao, 80) }}</p>
               
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <strong class="text-primary">{{ formatCurrency(produto.preco) }}</strong>
@@ -109,9 +108,9 @@
               <div class="d-flex gap-2">
                 <router-link 
                   :to="`/produtos/${produto.id}/editar`" 
-                  class="btn btn-sm btn-outline-primary flex-grow-1"
+                  class="btn btn-sm btn-outline-warning flex-grow-1"
                 >
-                  <i class="bi bi-pencil"></i>
+                  <i class="bi bi-pencil"></i> Editar
                 </router-link>
                 <button 
                   class="btn btn-sm btn-outline-danger"
@@ -172,7 +171,7 @@ const limparFiltros = () => {
 const confirmarDelecao = (produto) => {
   uiStore.mostrarModal({
     titulo: 'Confirmar Exclusao',
-    mensagem: `Deseja realmente excluir o produto "${produto.nome}"?`,
+    mensagem: `Deseja realmente excluir o carro "${produto.nome}"?`,
     tipo: 'danger',
     onConfirm: () => deletarProduto(produto.id)
   })
@@ -188,13 +187,101 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.page-container {
+    padding-top: 50px; 
+    padding-bottom: 50px;
+    min-height: 100vh;
+}
+
+/* -------------------------------------- */
+/* ESTILOS DE TEMA (GARANTINDO CONTRASTE) */
+/* -------------------------------------- */
+
+/* Fundo da seção de Filtros */
+.filter-card, .produto-card {
+    background-color: var(--bg-secondary); /* Cinza escuro no Dark Mode */
+    border: 1px solid var(--border-color); 
+    box-shadow: var(--shadow-md); 
+    border-radius: var(--border-radius-xl); 
+}
+
+/* INPUTS (BUSCA/SELECTS) */
+.custom-input {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary); /* Texto do input muda com o tema */
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-lg);
+}
+
+/* Corrige o texto dentro do Select/Input para ser legível */
+.custom-input, .custom-input option {
+    color: var(--text-primary); 
+    background-color: var(--bg-secondary); 
+}
+
+
+/* TÍTULOS E TEXTOS DENTRO DOS CARDS */
+.item-title {
+    color: var(--text-primary); /* Branco no Dark, Preto no Light */
+}
+.item-text {
+    color: var(--text-muted) !important; /* Muted para detalhes */
+}
+
+/* -------------------------------------- */
+/* HEADER: TÍTULO E BOTÃO */
+/* -------------------------------------- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem; 
+}
+
+.page-title {
+    color: var(--text-primary); /* Título principal muda com o tema */
+    font-size: 2.5rem; 
+    font-weight: 700;
+    letter-spacing: -0.05em;
+}
+
+/* Estilo do botão "Novo Carro" */
+.custom-new-button {
+    background-color: var(--color-primary); 
+    border-color: var(--color-primary);
+    color: white; 
+    font-weight: 700; 
+    padding: 0.8rem 2rem; 
+    border-radius: 50px; 
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4); 
+    text-transform: uppercase; 
+    letter-spacing: 0.05em; 
+}
+
+.custom-new-button:hover {
+    background-color: var(--color-info); 
+    border-color: var(--color-info);
+    transform: translateY(-4px); 
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.6);
+}
+
+/* -------------------------------------- */
+/* EFEITOS (MANTIDOS) */
+/* -------------------------------------- */
 .produto-card {
-  transition: transform var(--transition-normal);
-  cursor: pointer;
+    transition: transform var(--transition-normal);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-xl); 
 }
 
 .produto-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-md);
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.custom-reset-btn {
+    border-radius: var(--border-radius-lg);
 }
 </style>

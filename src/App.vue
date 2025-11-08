@@ -1,10 +1,15 @@
 <template>
   <div id="app" :data-theme="uiStore.tema">
     <!-- NavBar -->
-    <NavBar v-if="authStore.isAutenticado" />
+    <NavBar 
+      v-if="authStore.isAutenticado && !$route.meta.hideNavbar" 
+    />
     
     <!-- Conteudo Principal -->
-    <main class="main-content" :class="{ 'with-navbar': authStore.isAutenticado }">
+    <main 
+      class="main-content" 
+      :class="{ 'with-navbar': authStore.isAutenticado && !$route.meta.hideNavbar }"
+    >
       <router-view v-slot="{ Component }">
         <transition name="fade" mode="out-in">
           <component :is="Component" />

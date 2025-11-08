@@ -9,7 +9,7 @@ const routes = [
     path: '/',
     name: 'Home',
     component: () => import('@/views/Home.vue'),
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, hideNavbar: true }
   },
   {
     path: '/login',
@@ -47,12 +47,7 @@ const routes = [
     component: () => import('@/views/Perfil.vue'),
     meta: { requiresAuth: true }
   },
-  {
-    path: '/sobre',
-    name: 'Sobre',
-    component: () => import('@/views/Sobre.vue'),
-    meta: { requiresAuth: false }
-  },
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
