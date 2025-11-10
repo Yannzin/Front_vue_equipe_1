@@ -16,6 +16,68 @@ export const CATEGORIAS = [
   'Outros'
 ]
 
+export const MARCAS =[
+'Ford',
+'Tesla',
+'Chevrolet',
+'Toyota',
+'Honda',
+'BMW',
+'Audi',
+'Mercedes-Benz',
+'Volkswagen',
+'Nissan',
+'Hyundai',
+'Koenigsegg',
+'Pagani',
+'Lamborghini',
+'Ferrari',
+'McLaren',
+'Mazda',
+'Subaru'
+]
+
+
+export const CORES =[
+
+'Vermelho', 
+'Azul',
+'Preto', 
+'Branco', 
+'Cinza', 
+'Prata',
+'Verde', 
+'Amarelo', 
+'Laranja',
+'Roxo', 
+'Marrom',
+'Dourado'
+]
+
+export const ANOS = [
+ 2024, 2023, 2022, 2021, 2020,
+ 2019, 2018, 2017, 2016, 2015,
+ 2014, 2013, 2012, 2011, 2010,
+ 2009, 2008, 2007, 2006, 2005
+]
+
+export const COMBUSTIVEIS = [
+'Gasolina',
+'Etanol',
+'Diesel',
+'Elétrico',
+'Híbrido'
+]
+
+export const CAMBIOS = [
+'Manual',
+'Automático',
+'CVT',
+'Semi-automático'
+]
+
+
+
 // Status de estoque (ex: quantidade disponível em estoque físico)
 export const STATUS_ESTOQUE = {
   CRITICO: { valor: 1, label: 'Crítico', cor: 'danger' },
@@ -134,9 +196,6 @@ export const ICONES_CATEGORIA = {
   'Pickup': 'bi-truck-flatbed',
   'Esportivo': 'bi-lightning-charge',
   'Conversível': 'bi-wind',
-  'Crossover': 'bi-car-front',
-  'Minivan': 'bi-bus-front',
-  'Outros': 'bi-box'
 }
 
 // Cores para gráficos

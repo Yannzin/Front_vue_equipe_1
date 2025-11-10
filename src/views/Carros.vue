@@ -17,13 +17,14 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
-              <input 
-                v-model="filtros.busca"
-                type="text" 
-                class="form-control custom-input" 
-                placeholder="Buscar carros..."
-                @input="aplicarFiltros"
-              >
+<input 
+  v-model="carrosStore.filtros.busca"
+  type="text" 
+  class="form-control custom-input" 
+  placeholder="Buscar carros..."
+  @input="aplicarFiltros"
+/>
+
             </div>
             
             <div class="col-md-3">
@@ -133,12 +134,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useCarrosStore } from '@/store/carros'
 import { useUiStore } from '@/store/ui'
 import { CATEGORIAS } from '@/utils/constants'
 import { formatCurrency, truncateText } from '@/utils/formatters'
 import { debounce } from '@/utils/helpers'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+
 
 const carrosStore = useCarrosStore()
 const uiStore = useUiStore()
@@ -158,7 +163,6 @@ const getEstoqueStatus = (estoque) => {
 }
 
 const aplicarFiltros = debounce(() => {
-  carrosStore.setFiltros(filtros.value)
   carrosStore.carregarCarros()
 }, 300)
 
@@ -173,22 +177,33 @@ const limparFiltros = () => {
   carrosStore.carregarCarros()
 }
 
+const deletarCarro = async (id) => {
+  try {
+    await carrosStore.deletarCarro(id) // 🔹 Corrigido: deletarCarro
+  } catch (error) {
+    console.error('Erro ao deletar carro:', error)
+  }
+}
+
 const confirmarDelecao = (carro) => {
   uiStore.mostrarModal({
     titulo: 'Confirmar Exclusão',
     mensagem: `Deseja realmente excluir o carro "${carro.marca} ${carro.modelo}"?`,
     tipo: 'danger',
-    onConfirm: () => deletarCarro(carro.id)
+    onConfirm: () => deletarCarro(carro.id) // chama a função corrigida
   })
 }
 
-const deletarCarro = async (id) => {
-  await carrosStore.excluirCarro(id)
-}
-
 onMounted(() => {
+  console.log('Carros.vue → montado, carregando carros...')
   carrosStore.carregarCarros()
 })
+
+
+watch(() => route.fullPath, () => {
+  carrosStore.carregarCarros()
+})
+
 </script>
 
 <style scoped>

@@ -1,8 +1,6 @@
-// Store de Carros
-// Gerencia estado e operações de carros
-
+// src/store/carros.js
 import { defineStore } from 'pinia'
-import CarroService from '@/services/CarroService'  // Supondo que o serviço tenha sido adaptado para carros
+import CarroService from '@/services/CarroService'
 import { MENSAGENS_SUCESSO, MENSAGENS_ERRO } from '@/utils/constants'
 import { useUiStore } from './ui'
 
@@ -11,7 +9,7 @@ export const useCarrosStore = defineStore('carros', {
     carros: [],
     carroAtual: null,
     filtros: {
-      categoria: '',   // por exemplo, tipo do carro: SUV, Sedan, etc.
+      categoria: '',
       busca: '',
       ativo: true,
       ordenar: 'data_criacao',
@@ -20,168 +18,114 @@ export const useCarrosStore = defineStore('carros', {
     carregando: false,
     total: 0
   }),
-  
+
   getters: {
     carrosFiltrados: (state) => state.carros,
-    
-    carrosPorCategoria: (state) => {
-      const grupos = {}
-      state.carros.forEach(carro => {
-        const cat = carro.categoria || 'Outros'
-        if (!grupos[cat]) {
-          grupos[cat] = []
-        }
-        grupos[cat].push(carro)
-      })
-      return grupos
-    },
-    
     totalCarros: (state) => state.total,
-    
     carrosAtivos: (state) => state.carros.filter(c => c.ativo),
-    
     carrosInativos: (state) => state.carros.filter(c => !c.ativo)
   },
-  
+
   actions: {
     async carregarCarros() {
       const uiStore = useUiStore()
-      
+      this.carregando = true
+      uiStore.setCarregando(true)
+
       try {
-        this.carregando = true
-        uiStore.setCarregando(true)
-        
+        // ✅ Faz chamada real à API via CarroService
         const resultado = await CarroService.listarCarros(this.filtros)
 
-        this.carros = resultado.carros || []
-        this.total = resultado.total || 0
-        
+        // Espera que a API retorne array direto ou objeto com { carros, total }
+        this.carros = Array.isArray(resultado)
+          ? resultado
+          : resultado.carros || []
+
+        this.total = resultado.total || this.carros.length
       } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+        console.error('Erro ao carregar carros:', error)
+        const mensagem =
+          error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
-        throw error
       } finally {
         this.carregando = false
         uiStore.setCarregando(false)
       }
     },
-    
+
     async buscarCarro(id) {
       const uiStore = useUiStore()
-      
+      this.carregando = true
       try {
-        this.carregando = true
-        
         const carro = await CarroService.buscarCarro(id)
         this.carroAtual = carro
-        
         return carro
       } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+        const mensagem =
+          error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
+
     async criarCarro(dados) {
       const uiStore = useUiStore()
-      
+      this.carregando = true
       try {
-        this.carregando = true
-        
         const resultado = await CarroService.criarCarro(dados)
-        
-        // Recarregar lista de carros
         await this.carregarCarros()
-        
-        uiStore.mostrarToast(MENSAGENS_SUCESSO.PRODUTO_CRIADO, 'success') // Pode criar MENSAGENS_SUCESSO.CARRO_CRIADO se quiser
-        
-        return resultado.carro
+        uiStore.mostrarToast(MENSAGENS_SUCESSO.CARRO_CRIADO, 'success')
+        return resultado
       } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+        const mensagem =
+          error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
+
     async atualizarCarro(id, dados) {
       const uiStore = useUiStore()
-      
+      this.carregando = true
       try {
-        this.carregando = true
-        
-        const resultado = await CarroService.atualizarCarro(id, dados)
-        
-        // Recarregar lista de carros
+        await CarroService.atualizarCarro(id, dados)
         await this.carregarCarros()
-        
-        uiStore.mostrarToast(MENSAGENS_SUCESSO.PRODUTO_ATUALIZADO, 'success') // Pode criar MENSAGENS_SUCESSO.CARRO_ATUALIZADO
-        
-        return resultado.carro
+        uiStore.mostrarToast(MENSAGENS_SUCESSO.CARRO_ATUALIZADO, 'success')
       } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+        const mensagem =
+          error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
+
     async deletarCarro(id) {
       const uiStore = useUiStore()
-      
+      this.carregando = true
       try {
-        this.carregando = true
-        
         await CarroService.deletarCarro(id)
-        
-        // Recarregar lista de carros
         await this.carregarCarros()
-        
-        uiStore.mostrarToast(MENSAGENS_SUCESSO.PRODUTO_DELETADO, 'success') // Pode criar MENSAGENS_SUCESSO.CARRO_DELETADO
-        
+        uiStore.mostrarToast(MENSAGENS_SUCESSO.CARRO_DELETADO, 'success')
       } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+        const mensagem =
+          error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
-    async alternarAtivo(id, ativo) {
-      const uiStore = useUiStore()
-      
-      try {
-        await CarroService.alternarAtivo(id, ativo)
-        
-        // Recarregar lista de carros
-        await this.carregarCarros()
-        
-        const mensagem = ativo ? 'Carro ativado' : 'Carro desativado'
-        uiStore.mostrarToast(mensagem, 'success')
-        
-      } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
-        uiStore.mostrarToast(mensagem, 'danger')
-        
-        throw error
-      }
-    },
-    
+
     setFiltros(novosFiltros) {
       this.filtros = { ...this.filtros, ...novosFiltros }
     },
-    
+
     limparFiltros() {
       this.filtros = {
         categoria: '',
@@ -191,11 +135,11 @@ export const useCarrosStore = defineStore('carros', {
         ordem: 'desc'
       }
     },
-    
+
     setCarroAtual(carro) {
       this.carroAtual = carro
     },
-    
+
     limparCarroAtual() {
       this.carroAtual = null
     }

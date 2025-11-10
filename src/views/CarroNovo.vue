@@ -15,12 +15,12 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label">Marca *</label>
-                    <input 
-                      v-model="form.marca" 
-                      type="text" 
-                      class="form-control"
-                      required
-                    >
+                    <select v-model="form.marca" class="form-select" required>
+                      <option value="">Selecione...</option>
+                      <option v-for="cat in MARCAS" :key="cat" :value="cat">
+                        {{ cat }}
+                      </option>
+                    </select>
                   </div>
 
                   <div class="col-md-6">
@@ -58,6 +58,30 @@
                       >
                     </div>
                   </div>
+
+
+
+                  <div class="col-md-4">
+                    <label class="form-label">Quilometragem *</label>
+                    <input 
+                      v-model="form.quilometragem" 
+                      type="number" 
+                      class="form-control"
+                      required
+                      min="0"
+                    >
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label">Cor *</label>
+                    <select v-model="form.cor" class="form-select" required>
+                      <option value="">Selecione...</option>
+                      <option v-for="cat in CORES" :key="cat" :value="cat">
+                        {{ cat }}
+                      </option>
+                    </select>
+                  </div>
+
 
                   <div class="col-md-4">
                     <label class="form-label">Categoria *</label>
@@ -131,7 +155,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useCarrosStore } from '@/store/carros'
-import { CATEGORIAS } from '@/utils/constants'
+import { CATEGORIAS, CORES, MARCAS } from '@/utils/constants'
+
 
 const router = useRouter()
 const carrosStore = useCarrosStore()

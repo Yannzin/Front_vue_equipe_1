@@ -357,8 +357,19 @@ def atualizar_carro(carro_id):
         if not carro:
             return jsonify({'message': 'Carro não encontrado'}), 404
 
-        for campo, valor in dados.items():
-            if hasattr(carro, campo):
+        campos_permitidos = ['marca', 'modelo', 'ano', 'preco', 'cor', 'quilometragem',
+                              'combustivel', 'cambio', 'descricao', 'imagem_url', 'ativo']
+
+        for campo in campos_permitidos:
+            if campo in dados:
+                valor = dados[campo]
+                # Convertendo tipos específicos
+                if campo in ['ano', 'quilometragem']:
+                    valor = int(valor)
+                if campo == 'preco':
+                    valor = float(valor)
+                if campo == 'ativo':
+                    valor = bool(valor)
                 setattr(carro, campo, valor)
 
         db.session.commit()
