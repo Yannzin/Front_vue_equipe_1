@@ -52,7 +52,7 @@ export const useCarrosStore = defineStore('carros', {
         uiStore.setCarregando(true)
         
         const resultado = await CarroService.listarCarros(this.filtros)
-        
+
         this.carros = resultado.carros || []
         this.total = resultado.total || 0
         

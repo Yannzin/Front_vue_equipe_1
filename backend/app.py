@@ -10,13 +10,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Configuracoes
+# =====================
+# CONFIGURACOES
+# =====================
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///usuarios.db')
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'chave-muito-secreta')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600)))
 
-# Inicializar extensoes
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
 CORS(app)
@@ -27,17 +29,14 @@ CORS(app)
 
 @jwt.invalid_token_loader
 def invalid_token_callback(error):
-    print(f'[DEBUG] Invalid token: {str(error)}')
-    return jsonify({'message': 'Token invalido ou expirado'}), 401
+    return jsonify({'message': 'Token inválido ou expirado'}), 401
 
 @jwt.unauthorized_loader
 def missing_token_callback(error):
-    print(f'[DEBUG] Missing token: {str(error)}')
-    return jsonify({'message': 'Token de autorizacao nao fornecido'}), 401
+    return jsonify({'message': 'Token de autorização não fornecido'}), 401
 
 @jwt.expired_token_loader
 def expired_token_callback(jwt_header, jwt_data):
-    print(f'[DEBUG] Token expirado')
     return jsonify({'message': 'Token expirado'}), 401
 
 # =====================
@@ -46,26 +45,23 @@ def expired_token_callback(jwt_header, jwt_data):
 
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha = db.Column(db.String(255), nullable=False)
     data_criacao = db.Column(db.DateTime, default=db.func.now())
-    
-    # Relacionamento com produtos
-    produtos = db.relationship('Produto', backref='usuario', lazy=True, cascade='all, delete-orphan')
-    
+
+   
+    carros = db.relationship('Carro', backref='usuario', lazy=True, cascade='all, delete-orphan')
+
     def set_password(self, senha):
-        """Hash da senha antes de armazenar"""
         self.senha = generate_password_hash(senha)
-    
+
     def check_password(self, senha):
-        """Verifica se a senha fornecida corresponde ao hash armazenado"""
         return check_password_hash(self.senha, senha)
-    
+
     def to_dict(self):
-        """Converte usuario para dicionario (sem expor a senha)"""
         return {
             'id': self.id,
             'nome': self.nome,
@@ -74,40 +70,51 @@ class Usuario(db.Model):
         }
 
 
-class Produto(db.Model):
-    __tablename__ = 'produtos'
-    
+# =====================
+# NOVO MODEL: CARROS
+# =====================
+
+class Carro(db.Model):
+    __tablename__ = 'carros'
+
     id = db.Column(db.Integer, primary_key=True)
-    nome = db.Column(db.String(200), nullable=False)
-    descricao = db.Column(db.Text)
+    marca = db.Column(db.String(120), nullable=False)
+    modelo = db.Column(db.String(120), nullable=False)
+    ano = db.Column(db.Integer, nullable=False)
     preco = db.Column(db.Float, nullable=False)
-    estoque = db.Column(db.Integer, default=0)
-    categoria = db.Column(db.String(100))
+    cor = db.Column(db.String(50))
+    quilometragem = db.Column(db.Integer, default=0)
+    combustivel = db.Column(db.String(50))
+    cambio = db.Column(db.String(50))
+    descricao = db.Column(db.Text)
     imagem_url = db.Column(db.String(500))
     ativo = db.Column(db.Boolean, default=True)
     data_criacao = db.Column(db.DateTime, default=db.func.now())
-    data_atualizacao = db.Column(db.DateTime, default=db.func.now(), onupdate=db.func.now())
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    
+
     def to_dict(self):
-        """Converte produto para dicionario"""
         return {
             'id': self.id,
-            'nome': self.nome,
+            'marca': self.marca,
+            'modelo': self.modelo,
+            'ano': self.ano,
+            'preco': float(self.preco),
+            'cor': self.cor,
+            'quilometragem': self.quilometragem,
+            'combustivel': self.combustivel,
+            'cambio': self.cambio,
             'descricao': self.descricao,
-            'preco': float(self.preco) if self.preco else 0,
-            'estoque': self.estoque,
-            'categoria': self.categoria,
             'imagem_url': self.imagem_url,
             'ativo': self.ativo,
             'data_criacao': self.data_criacao.isoformat() if self.data_criacao else None,
-            'data_atualizacao': self.data_atualizacao.isoformat() if self.data_atualizacao else None,
             'usuario_id': self.usuario_id
         }
 
 # =====================
-# ROTAS DE AUTENTICACAO
+# ROTAS DE CARROS (CRUD)
 # =====================
+
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -265,312 +272,127 @@ def health():
     return jsonify({'status': 'ok', 'message': 'Backend Flask rodando'}), 200
 
 
-# =====================
-# ROTAS DE PRODUTOS (CRUD)
-# =====================
 
-@app.route('/api/produtos', methods=['GET'])
+
+@app.route('/api/carros', methods=['GET'])
 @jwt_required(locations=["headers"])
-def listar_produtos():
-    """
-    Lista todos os produtos com filtros opcionais
-    
-    Query params:
-    - categoria: filtro por categoria
-    - busca: busca por nome
-    - ativo: filtro por ativo (true/false)
-    - ordenar: campo para ordenacao (nome, preco, data)
-    - ordem: asc ou desc
-    """
+def listar_carros():
     try:
-        # Obter parametros de query
-        categoria = request.args.get('categoria')
-        busca = request.args.get('busca')
+        marca = request.args.get('marca')
+        modelo = request.args.get('modelo')
         ativo = request.args.get('ativo')
-        ordenar = request.args.get('ordenar', 'data_criacao')
-        ordem = request.args.get('ordem', 'desc')
-        
-        # Query base
-        query = Produto.query
-        
-        # Aplicar filtros
-        if categoria:
-            query = query.filter(Produto.categoria == categoria)
-        
-        if busca:
-            query = query.filter(Produto.nome.ilike(f'%{busca}%'))
-        
+
+        query = Carro.query
+        if marca:
+            query = query.filter(Carro.marca.ilike(f'%{marca}%'))
+        if modelo:
+            query = query.filter(Carro.modelo.ilike(f'%{modelo}%'))
         if ativo is not None:
-            query = query.filter(Produto.ativo == (ativo.lower() == 'true'))
-        
-        # Aplicar ordenacao
-        if ordenar == 'nome':
-            campo_ordem = Produto.nome
-        elif ordenar == 'preco':
-            campo_ordem = Produto.preco
-        else:
-            campo_ordem = Produto.data_criacao
-        
-        if ordem == 'asc':
-            query = query.order_by(campo_ordem.asc())
-        else:
-            query = query.order_by(campo_ordem.desc())
-        
-        produtos = query.all()
-        
-        return jsonify({
-            'produtos': [p.to_dict() for p in produtos],
-            'total': len(produtos)
-        }), 200
-    
+            query = query.filter(Carro.ativo == (ativo.lower() == 'true'))
+
+        carros = query.order_by(Carro.data_criacao.desc()).all()
+        return jsonify({'carros': [c.to_dict() for c in carros]}), 200
+
     except Exception as e:
-        print(f'Erro ao listar produtos: {str(e)}')
-        return jsonify({'message': 'Erro ao listar produtos'}), 500
+        print(f'Erro ao listar carros: {str(e)}')
+        return jsonify({'message': 'Erro ao listar carros'}), 500
 
 
-@app.route('/api/produtos/<int:produto_id>', methods=['GET'])
+
+@app.route('/api/carros/<int:carro_id>', methods=['GET'])
 @jwt_required(locations=["headers"])
-def buscar_produto(produto_id):
-    """Busca um produto especifico por ID"""
+def buscar_carro(carro_id):
     try:
-        produto = Produto.query.get(produto_id)
-        
-        if not produto:
-            return jsonify({'message': 'Produto nao encontrado'}), 404
-        
-        return jsonify(produto.to_dict()), 200
-    
+        carro = Carro.query.get(carro_id)
+        if not carro:
+            return jsonify({'message': 'Carro não encontrado'}), 404
+        return jsonify(carro.to_dict()), 200
     except Exception as e:
-        print(f'Erro ao buscar produto: {str(e)}')
-        return jsonify({'message': 'Erro ao buscar produto'}), 500
+        print(f'Erro ao buscar carro: {str(e)}')
+        return jsonify({'message': 'Erro ao buscar carro'}), 500
 
 
-@app.route('/api/produtos', methods=['POST'])
+
+@app.route('/api/carros', methods=['POST'])
 @jwt_required(locations=["headers"])
-def criar_produto():
-    """
-    Cria um novo produto
-    
-    Request JSON:
-    {
-        "nome": "Produto Teste",
-        "descricao": "Descricao do produto",
-        "preco": 99.99,
-        "estoque": 10,
-        "categoria": "Eletronicos",
-        "imagem_url": "https://...",
-        "ativo": true
-    }
-    """
+def criar_carro():
     try:
         dados = request.get_json()
         usuario_id = get_jwt_identity()
-        
-        # Validacoes
-        if not dados.get('nome'):
-            return jsonify({'message': 'Nome e obrigatorio'}), 400
-        
-        if not dados.get('preco'):
-            return jsonify({'message': 'Preco e obrigatorio'}), 400
-        
-        if dados['preco'] < 0:
-            return jsonify({'message': 'Preco deve ser positivo'}), 400
-        
-        # Criar produto
-        novo_produto = Produto(
-            nome=dados['nome'],
+
+        if not dados.get('marca') or not dados.get('modelo') or not dados.get('ano') or not dados.get('preco'):
+            return jsonify({'message': 'Campos obrigatórios: marca, modelo, ano, preco'}), 400
+
+        carro = Carro(
+            marca=dados['marca'],
+            modelo=dados['modelo'],
+            ano=int(dados['ano']),
+            preco=float(dados['preco']),
+            cor=dados.get('cor'),
+            quilometragem=dados.get('quilometragem', 0),
+            combustivel=dados.get('combustivel'),
+            cambio=dados.get('cambio'),
             descricao=dados.get('descricao', ''),
-            preco=dados['preco'],
-            estoque=dados.get('estoque', 0),
-            categoria=dados.get('categoria', 'Outros'),
             imagem_url=dados.get('imagem_url'),
             ativo=dados.get('ativo', True),
             usuario_id=int(usuario_id)
         )
-        
-        db.session.add(novo_produto)
+
+        db.session.add(carro)
         db.session.commit()
-        
-        return jsonify({
-            'message': 'Produto criado com sucesso',
-            'produto': novo_produto.to_dict()
-        }), 201
-    
+        return jsonify({'message': 'Carro cadastrado com sucesso', 'carro': carro.to_dict()}), 201
+
     except Exception as e:
         db.session.rollback()
-        print(f'Erro ao criar produto: {str(e)}')
-        return jsonify({'message': 'Erro ao criar produto'}), 500
+        print(f'Erro ao criar carro: {str(e)}')
+        return jsonify({'message': 'Erro ao criar carro'}), 500
 
-
-@app.route('/api/produtos/<int:produto_id>', methods=['PUT'])
+@app.route('/api/carros/<int:carro_id>', methods=['PUT'])
 @jwt_required(locations=["headers"])
-def atualizar_produto(produto_id):
-    """Atualiza um produto existente"""
+def atualizar_carro(carro_id):
     try:
         dados = request.get_json()
-        produto = Produto.query.get(produto_id)
-        
-        if not produto:
-            return jsonify({'message': 'Produto nao encontrado'}), 404
-        
-        # Atualizar campos
-        if 'nome' in dados:
-            produto.nome = dados['nome']
-        if 'descricao' in dados:
-            produto.descricao = dados['descricao']
-        if 'preco' in dados:
-            if dados['preco'] < 0:
-                return jsonify({'message': 'Preco deve ser positivo'}), 400
-            produto.preco = dados['preco']
-        if 'estoque' in dados:
-            produto.estoque = dados['estoque']
-        if 'categoria' in dados:
-            produto.categoria = dados['categoria']
-        if 'imagem_url' in dados:
-            produto.imagem_url = dados['imagem_url']
-        if 'ativo' in dados:
-            produto.ativo = dados['ativo']
-        
+        carro = Carro.query.get(carro_id)
+
+        if not carro:
+            return jsonify({'message': 'Carro não encontrado'}), 404
+
+        for campo, valor in dados.items():
+            if hasattr(carro, campo):
+                setattr(carro, campo, valor)
+
         db.session.commit()
-        
-        return jsonify({
-            'message': 'Produto atualizado com sucesso',
-            'produto': produto.to_dict()
-        }), 200
-    
+        return jsonify({'message': 'Carro atualizado com sucesso', 'carro': carro.to_dict()}), 200
+
     except Exception as e:
         db.session.rollback()
-        print(f'Erro ao atualizar produto: {str(e)}')
-        return jsonify({'message': 'Erro ao atualizar produto'}), 500
+        print(f'Erro ao atualizar carro: {str(e)}')
+        return jsonify({'message': 'Erro ao atualizar carro'}), 500
 
-
-@app.route('/api/produtos/<int:produto_id>', methods=['DELETE'])
+@app.route('/api/carros/<int:carro_id>', methods=['DELETE'])
 @jwt_required(locations=["headers"])
-def deletar_produto(produto_id):
-    """Deleta um produto"""
+def deletar_carro(carro_id):
     try:
-        produto = Produto.query.get(produto_id)
-        
-        if not produto:
-            return jsonify({'message': 'Produto nao encontrado'}), 404
-        
-        db.session.delete(produto)
+        carro = Carro.query.get(carro_id)
+        if not carro:
+            return jsonify({'message': 'Carro não encontrado'}), 404
+
+        db.session.delete(carro)
         db.session.commit()
-        
-        return jsonify({'message': 'Produto deletado com sucesso'}), 200
-    
+        return jsonify({'message': 'Carro removido com sucesso'}), 200
+
     except Exception as e:
         db.session.rollback()
-        print(f'Erro ao deletar produto: {str(e)}')
-        return jsonify({'message': 'Erro ao deletar produto'}), 500
+        print(f'Erro ao deletar carro: {str(e)}')
+        return jsonify({'message': 'Erro ao deletar carro'}), 500
 
 
 # =====================
-# ROTAS DE DASHBOARD
-# =====================
-
-@app.route('/api/dashboard/stats', methods=['GET'])
-@jwt_required(locations=["headers"])
-def dashboard_stats():
-    """Retorna estatisticas gerais do sistema"""
-    try:
-        total_produtos = Produto.query.count()
-        produtos_ativos = Produto.query.filter_by(ativo=True).count()
-        produtos_inativos = total_produtos - produtos_ativos
-        
-        # Calcular valor total em estoque
-        produtos = Produto.query.filter_by(ativo=True).all()
-        valor_total = sum(p.preco * p.estoque for p in produtos)
-        
-        # Produtos com estoque baixo (menos de 10)
-        estoque_baixo = Produto.query.filter(Produto.estoque < 10, Produto.ativo == True).count()
-        
-        # Produtos por categoria
-        categorias = db.session.query(
-            Produto.categoria,
-            db.func.count(Produto.id).label('total')
-        ).group_by(Produto.categoria).all()
-        
-        produtos_por_categoria = [
-            {'categoria': cat, 'total': total}
-            for cat, total in categorias
-        ]
-        
-        return jsonify({
-            'total_produtos': total_produtos,
-            'produtos_ativos': produtos_ativos,
-            'produtos_inativos': produtos_inativos,
-            'valor_total_estoque': float(valor_total),
-            'produtos_estoque_baixo': estoque_baixo,
-            'produtos_por_categoria': produtos_por_categoria
-        }), 200
-    
-    except Exception as e:
-        print(f'Erro ao buscar estatisticas: {str(e)}')
-        return jsonify({'message': 'Erro ao buscar estatisticas'}), 500
-
-
-@app.route('/api/dashboard/atividades', methods=['GET'])
-@jwt_required(locations=["headers"])
-def dashboard_atividades():
-    """Retorna atividades recentes (ultimos produtos criados/atualizados)"""
-    try:
-        # Ultimos 10 produtos criados
-        produtos_recentes = Produto.query.order_by(
-            Produto.data_criacao.desc()
-        ).limit(10).all()
-        
-        atividades = [
-            {
-                'tipo': 'criacao',
-                'produto': p.to_dict(),
-                'data': p.data_criacao.isoformat()
-            }
-            for p in produtos_recentes
-        ]
-        
-        return jsonify({'atividades': atividades}), 200
-    
-    except Exception as e:
-        print(f'Erro ao buscar atividades: {str(e)}')
-        return jsonify({'message': 'Erro ao buscar atividades'}), 500
-
-
-@app.route('/api/categorias', methods=['GET'])
-@jwt_required(locations=["headers"])
-def listar_categorias():
-    """Lista todas as categorias unicas"""
-    try:
-        categorias = db.session.query(Produto.categoria).distinct().all()
-        categorias_lista = [cat[0] for cat in categorias if cat[0]]
-        
-        return jsonify({'categorias': categorias_lista}), 200
-    
-    except Exception as e:
-        print(f'Erro ao listar categorias: {str(e)}')
-        return jsonify({'message': 'Erro ao listar categorias'}), 500
-
-
-# =====================
-# MANIPULADORES DE ERRO
-# =====================
-
-@app.errorhandler(404)
-def nao_encontrado(error):
-    return jsonify({'message': 'Recurso nao encontrado'}), 404
-
-
-@app.errorhandler(500)
-def erro_interno(error):
-    return jsonify({'message': 'Erro interno do servidor'}), 500
-
-
-# =====================
-# CRIAR BANCO DE DADOS E EXECUTAR APP
+# MAIN
 # =====================
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    ##app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)

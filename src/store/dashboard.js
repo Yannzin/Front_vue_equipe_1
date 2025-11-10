@@ -1,5 +1,5 @@
-// Store de Dashboard
-// Gerencia estatisticas e dados do dashboard
+// Store de Dashboard (Carros)
+// Gerencia estatísticas e dados do painel de carros
 
 import { defineStore } from 'pinia'
 import DashboardService from '@/services/DashboardService'
@@ -9,90 +9,80 @@ import { useUiStore } from './ui'
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
     estatisticas: {
-      total_produtos: 0,
-      produtos_ativos: 0,
-      produtos_inativos: 0,
+      total_carros: 0,
+      carros_disponiveis: 0,
+      carros_vendidos: 0,
       valor_total_estoque: 0,
-      produtos_estoque_baixo: 0,
-      produtos_por_categoria: []
+      carros_por_categoria: []
     },
     atividades: [],
     categorias: [],
     carregando: false
   }),
-  
+
   getters: {
-    totalProdutos: (state) => state.estatisticas.total_produtos,
-    produtosAtivos: (state) => state.estatisticas.produtos_ativos,
-    produtosInativos: (state) => state.estatisticas.produtos_inativos,
-    valorTotal: (state) => state.estatisticas.valor_total_estoque,
-    estoqueBaixo: (state) => state.estatisticas.produtos_estoque_baixo,
-    produtosPorCategoria: (state) => state.estatisticas.produtos_por_categoria,
-    
+    totalCarros: (state) => state.estatisticas.total_carros,
+    carrosDisponiveis: (state) => state.estatisticas.carros_disponiveis,
+    carrosVendidos: (state) => state.estatisticas.carros_vendidos,
+    valorTotalEstoque: (state) => state.estatisticas.valor_total_estoque,
+    carrosPorCategoria: (state) => state.estatisticas.carros_por_categoria,
+
     atividadesRecentes: (state) => state.atividades.slice(0, 10),
-    
+
     todasCategorias: (state) => state.categorias
   },
-  
+
   actions: {
-    async carregarEstatisticas() {
+    async carregarEstatisticasCarros() {
       const uiStore = useUiStore()
-      
+
       try {
         this.carregando = true
-        
-        const dados = await DashboardService.buscarEstatisticas()
+        const dados = await DashboardService.buscarEstatisticasCarros()
         this.estatisticas = dados
-        
       } catch (error) {
         const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
-    async carregarAtividades() {
+
+    async carregarAtividadesCarros() {
       const uiStore = useUiStore()
-      
+
       try {
         this.carregando = true
-        
-        const dados = await DashboardService.buscarAtividades()
+        const dados = await DashboardService.buscarAtividadesCarros()
         this.atividades = dados.atividades || []
-        
       } catch (error) {
         const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       } finally {
         this.carregando = false
       }
     },
-    
-    async carregarCategorias() {
+
+    async carregarCategoriasCarros() {
       const uiStore = useUiStore()
-      
+
       try {
-        const dados = await DashboardService.listarCategorias()
+        const dados = await DashboardService.listarCategoriasCarros()
         this.categorias = dados.categorias || []
-        
       } catch (error) {
         const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
         uiStore.mostrarToast(mensagem, 'danger')
-        
         throw error
       }
     },
-    
+
     async carregarTudo() {
       await Promise.all([
-        this.carregarEstatisticas(),
-        this.carregarAtividades(),
-        this.carregarCategorias()
+        this.carregarEstatisticasCarros(),
+        this.carregarAtividadesCarros(),
+        this.carregarCategoriasCarros()
       ])
     }
   }

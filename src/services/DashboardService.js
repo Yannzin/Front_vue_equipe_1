@@ -5,7 +5,7 @@ import { get } from './api'
 
 class DashboardService {
   // Buscar estatisticas gerais
-  async buscarEstatisticas() {
+  async buscarEstatisticasCarros() {
     try {
       const response = await get('/api/dashboard/stats')
       return response.data
@@ -15,7 +15,7 @@ class DashboardService {
   }
   
   // Buscar atividades recentes
-  async buscarAtividades() {
+  async buscarAtividadesCarros() {
     try {
       const response = await get('/api/dashboard/atividades')
       return response.data
@@ -25,7 +25,7 @@ class DashboardService {
   }
   
   // Listar categorias disponiveis
-  async listarCategorias() {
+  async listarCategoriasCarros() {
     try {
       const response = await get('/api/categorias')
       return response.data
@@ -35,4 +35,4 @@ class DashboardService {
   }
 }
 
-export default new DashboardService()
+export default new DashboardService();

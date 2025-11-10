@@ -76,14 +76,16 @@
         <p class="text-white-50 mt-3">Carregando carros...</p>
       </div>
       
-      <div v-else-if="carrosStore.lista.length === 0" class="text-center py-5">
+      <div v-else-if="!carrosStore.carros || carrosStore.carros.length === 0" class="text-center py-5">
+
         <i class="bi bi-inbox display-1 text-muted"></i>
         <p class="text-white-50 mt-3">Nenhum carro encontrado</p>
       </div>
       
       <div v-else class="row g-4">
         <div 
-          v-for="carro in carrosStore.lista" 
+          v-for="carro in carrosStore.carros"
+ 
           :key="carro.id"
           class="col-md-4 col-lg-3"
         >
@@ -95,7 +97,10 @@
               style="height: 200px; object-fit: cover;"
             >
             <div class="card-body">
-              <h5 class="card-title item-title">{{ `${carro.marca} ${carro.modelo}` }}</h5>
+              <h5 class="card-title item-title">
+                {{ `${carro.marca || ''} ${carro.modelo || ''}`.trim() }}
+              </h5>
+
               <p class="card-text item-text small">{{ truncateText(carro.descricao, 80) }}</p>
               
               <div class="d-flex justify-content-between align-items-center mb-2">

@@ -12,7 +12,7 @@
             <router-link to="/dashboard" class="nav-link text-white-50">Dashboard</router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/produtos" class="nav-link text-white-50">Carros</router-link>
+            <router-link to="/carros" class="nav-link text-white-50">Carros</router-link>
           </li>
         </ul>
       </div>

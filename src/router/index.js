@@ -42,26 +42,6 @@ const routes = [
   },
   // 🔼 --- FIM DAS ROTAS DE CARROS --- 🔼
 
-  // (Opcional) Mantenha as rotas antigas enquanto migra:
-  {
-    path: '/produtos',
-    name: 'Produtos',
-    component: () => import('@/views/Produtos.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/produtos/novo',
-    name: 'ProdutoNovo',
-    component: () => import('@/views/ProdutoNovo.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/produtos/:id/editar',
-    name: 'ProdutoEdit',
-    component: () => import('@/views/ProdutoEdit.vue'),
-    meta: { requiresAuth: true }
-  },
-
   {
     path: '/perfil',
     name: 'Perfil',
