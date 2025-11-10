@@ -10,7 +10,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # =====================
 # CONFIGURACOES
@@ -21,7 +20,10 @@ app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=int(os.getenv('JWT_AC
 
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-CORS(app)
+
+# ✅ Configuração única e correta de CORS
+CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}}, supports_credentials=True)
+
 
 # =====================
 # HANDLERS JWT
@@ -396,6 +398,36 @@ def deletar_carro(carro_id):
         db.session.rollback()
         print(f'Erro ao deletar carro: {str(e)}')
         return jsonify({'message': 'Erro ao deletar carro'}), 500
+
+
+
+
+@app.route('/api/categorias', methods=['GET'])
+def listar_categorias():
+    """Retorna categorias fixas de carros"""
+    categorias = [
+        {"id": 1, "nome": "SUV"},
+        {"id": 2, "nome": "Sedan"},
+        {"id": 3, "nome": "Hatch"},
+        {"id": 4, "nome": "Picape"},
+        {"id": 5, "nome": "Conversível"},
+        {"id": 6, "nome": "Esportivo"}
+    ]
+    return jsonify({"categorias": categorias}), 200
+
+
+
+@app.route('/api/dashboard/atividades', methods=['GET'])
+def listar_atividades_dashboard():
+    atividades = [
+        {"id": 1, "marca": "Toyota", "modelo": "Corolla", "data": "2025-11-10T18:00:00"},
+        {"id": 2, "marca": "Fiat", "modelo": "Argo", "data": "2025-11-10T17:30:00"},
+        {"id": 3, "marca": "Ford", "modelo": "Ranger", "data": "2025-11-09T15:00:00"}
+    ]
+    return jsonify({"atividades": atividades}), 200
+
+
+
 
 
 # =====================

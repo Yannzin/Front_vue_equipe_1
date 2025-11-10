@@ -125,9 +125,13 @@
                     style="font-size: 8px; margin-top: 6px;"
                   ></i>
                   <div>
-                    <p class="mb-0">
-                      {{ atividade.carro.modelo }} - {{ atividade.carro.marca }}
-                    </p>
+<p v-if="atividade.carro" class="mb-0">
+  {{ atividade.carro.modelo }} - {{ atividade.carro.marca }}
+</p>
+<p v-else class="mb-0 text-muted">
+  Sem informações do carro
+</p>
+
                     <small class="text-muted">
                       {{ formatRelativeTime(atividade.data) }}
                     </small>

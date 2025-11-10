@@ -33,37 +33,51 @@ export const useDashboardStore = defineStore('dashboard', {
   },
 
   actions: {
-    async carregarEstatisticasCarros() {
-      const uiStore = useUiStore()
+async carregarEstatisticasCarros() {
+  const uiStore = useUiStore()
 
-      try {
-        this.carregando = true
-        const dados = await DashboardService.buscarEstatisticasCarros()
-        this.estatisticas = dados
-      } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
-        uiStore.mostrarToast(mensagem, 'danger')
-        throw error
-      } finally {
-        this.carregando = false
-      }
-    },
+  try {
+    this.carregando = true
+    const dados = await DashboardService.buscarEstatisticasCarros()
 
-    async carregarAtividadesCarros() {
-      const uiStore = useUiStore()
+    // 🔧 Normaliza os campos para o formato esperado pelos getters
+    this.estatisticas = {
+      total_carros: dados.total_carros ?? dados.totalCarros ?? 0,
+      carros_disponiveis: dados.carros_disponiveis ?? dados.carrosDisponiveis ?? 0,
+      carros_vendidos: dados.carros_vendidos ?? dados.carrosVendidos ?? 0,
+      valor_total_estoque: dados.valor_total_estoque ?? dados.valorTotalEstoque ?? 0,
+      carros_por_categoria: dados.carros_por_categoria ?? dados.carrosPorCategoria ?? []
+    }
+  } catch (error) {
+    const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+    uiStore.mostrarToast(mensagem, 'danger')
+    throw error
+  } finally {
+    this.carregando = false
+  }
+},
 
-      try {
-        this.carregando = true
-        const dados = await DashboardService.buscarAtividadesCarros()
-        this.atividades = dados.atividades || []
-      } catch (error) {
-        const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
-        uiStore.mostrarToast(mensagem, 'danger')
-        throw error
-      } finally {
-        this.carregando = false
-      }
-    },
+async carregarAtividadesCarros() {
+  const uiStore = useUiStore()
+
+  try {
+    this.carregando = true
+    const dados = await DashboardService.buscarAtividadesCarros()
+
+    // ✅ Garante que cada atividade tenha um objeto carro válido
+    this.atividades = (dados.atividades || []).map((a) => ({
+      ...a,
+      carro: a.carro || { modelo: 'Desconhecido', marca: '—' }
+    }))
+  } catch (error) {
+    const mensagem = error.response?.data?.message || MENSAGENS_ERRO.ERRO_GENERICO
+    uiStore.mostrarToast(mensagem, 'danger')
+    throw error
+  } finally {
+    this.carregando = false
+  }
+}
+,
 
     async carregarCategoriasCarros() {
       const uiStore = useUiStore()

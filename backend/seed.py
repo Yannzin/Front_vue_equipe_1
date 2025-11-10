@@ -101,6 +101,7 @@ CARROS_TESTE = [
         'imagem_url': 'https://images.unsplash.com/photo-1604251408760-6c1ef4276f77?w=400',
         'ativo': True
     },
+    
     {
         'nome': 'Audi Q3 2022',
         'descricao': 'SUV de luxo, motor 2.0 TFSI, tração quattro e conforto premium.',
