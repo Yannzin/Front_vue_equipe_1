@@ -4,6 +4,7 @@ from flask_jwt_extended import JWTManager, create_access_token, jwt_required, ge
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
+from sqlalchemy import func # Adicionada para a função SUM e COUNT no Dashboard
 import os
 from dotenv import load_dotenv
 
@@ -54,7 +55,7 @@ class Usuario(db.Model):
     senha = db.Column(db.String(255), nullable=False)
     data_criacao = db.Column(db.DateTime, default=db.func.now())
 
-   
+    
     carros = db.relationship('Carro', backref='usuario', lazy=True, cascade='all, delete-orphan')
 
     def set_password(self, senha):
@@ -113,36 +114,14 @@ class Carro(db.Model):
         }
 
 # =====================
-# ROTAS DE CARROS (CRUD)
+# ROTAS DE AUTENTICACAO
 # =====================
-
 
 
 @app.route('/login', methods=['POST'])
 def login():
     """
     Endpoint para login do usuario.
-    
-    Request JSON:
-    {
-        "email": "prof@admin.com",
-        "senha": "admin123"
-    }
-    
-    Response (sucesso):
-    {
-        "access_token": "eyJ0eXAiOiJKV1QiLC...",
-        "user": {
-            "id": 1,
-            "nome": "Prof Admin",
-            "email": "prof@admin.com"
-        }
-    }
-    
-    Response (erro 401):
-    {
-        "message": "Email ou senha incorretos."
-    }
     """
     try:
         dados = request.get_json()
@@ -172,28 +151,6 @@ def login():
 def cadastro():
     """
     Endpoint para cadastro de novo usuario.
-    
-    Request JSON:
-    {
-        "nome": "Aluno User",
-        "email": "aluno@user.com",
-        "senha": "user123"
-    }
-    
-    Response (sucesso):
-    {
-        "message": "Usuario criado com sucesso",
-        "user": {
-            "id": 2,
-            "nome": "Aluno User",
-            "email": "aluno@user.com"
-        }
-    }
-    
-    Response (erro 422):
-    {
-        "message": "Email ja registrado"
-    }
     """
     try:
         dados = request.get_json()
@@ -232,24 +189,9 @@ def cadastro():
 def obter_perfil():
     """
     Endpoint protegido para obter dados do perfil do usuario logado.
-    Requer token JWT no header Authorization: Bearer <token>
-    
-    Response:
-    {
-        "id": 1,
-        "nome": "Prof Admin",
-        "email": "prof@admin.com",
-        "data_criacao": "2025-10-24T10:30:00"
-    }
     """
     try:
-        # Debug: verificar token
-        auth_header = request.headers.get('Authorization', 'Nao fornecido')
-        print(f'[DEBUG] Authorization header: {auth_header[:50]}...' if len(auth_header) > 50 else f'[DEBUG] Authorization header: {auth_header}')
-        
         usuario_id = get_jwt_identity()
-        print(f'[DEBUG] JWT identity extraido: {usuario_id}')
-        
         usuario = Usuario.query.get(int(usuario_id))
         
         if not usuario:
@@ -274,7 +216,9 @@ def health():
     return jsonify({'status': 'ok', 'message': 'Backend Flask rodando'}), 200
 
 
-
+# =====================
+# ROTAS DE CARROS (CRUD)
+# =====================
 
 @app.route('/api/carros', methods=['GET'])
 @jwt_required(locations=["headers"])
@@ -300,7 +244,6 @@ def listar_carros():
         return jsonify({'message': 'Erro ao listar carros'}), 500
 
 
-
 @app.route('/api/carros/<int:carro_id>', methods=['GET'])
 @jwt_required(locations=["headers"])
 def buscar_carro(carro_id):
@@ -312,7 +255,6 @@ def buscar_carro(carro_id):
     except Exception as e:
         print(f'Erro ao buscar carro: {str(e)}')
         return jsonify({'message': 'Erro ao buscar carro'}), 500
-
 
 
 @app.route('/api/carros', methods=['POST'])
@@ -400,7 +342,9 @@ def deletar_carro(carro_id):
         return jsonify({'message': 'Erro ao deletar carro'}), 500
 
 
-
+# =====================
+# ROTAS DE DASHBOARD
+# =====================
 
 @app.route('/api/categorias', methods=['GET'])
 def listar_categorias():
@@ -416,18 +360,69 @@ def listar_categorias():
     return jsonify({"categorias": categorias}), 200
 
 
-
 @app.route('/api/dashboard/atividades', methods=['GET'])
 def listar_atividades_dashboard():
+    """
+    Retorna uma lista mockada (simulada) de atividades recentes.
+    Para uma aplicação real, você buscaria isso do banco de dados.
+    """
     atividades = [
-        {"id": 1, "marca": "Toyota", "modelo": "Corolla", "data": "2025-11-10T18:00:00"},
-        {"id": 2, "marca": "Fiat", "modelo": "Argo", "data": "2025-11-10T17:30:00"},
-        {"id": 3, "marca": "Ford", "modelo": "Ranger", "data": "2025-11-09T15:00:00"}
+        {"id": 1, "carro": {"modelo": "Corolla", "marca": "Toyota"}, "data": "2025-11-10T18:00:00"},
+        {"id": 2, "carro": {"modelo": "Argo", "marca": "Fiat"}, "data": "2025-11-10T17:30:00"},
+        {"id": 3, "carro": {"modelo": "Ranger", "marca": "Ford"}, "data": "2025-11-09T15:00:00"}
     ]
     return jsonify({"atividades": atividades}), 200
 
 
+@app.route('/api/dashboard/stats', methods=['GET'])
+@jwt_required(locations=["headers"])
+def buscar_estatisticas_dashboard():
+    """
+    Calcula e retorna estatísticas chave para o painel de carros,
+    consultando o banco de dados.
+    """
+    try:
+        # 1. Total de Carros
+        total_carros = db.session.query(Carro).count()
+        
+        # 2. Carros Disponíveis (ativo=True)
+        carros_disponiveis = db.session.query(Carro).filter(Carro.ativo == True).count()
 
+        # 3. Carros Vendidos (ativo=False)
+        # Assumindo que um carro não-ativo foi 'vendido'
+        carros_vendidos = db.session.query(Carro).filter(Carro.ativo == False).count()
+
+        # 4. Valor Total em Estoque (apenas carros ativos)
+        valor_total_estoque_ativo = db.session.query(func.sum(Carro.preco)).filter(Carro.ativo == True).scalar()
+        if valor_total_estoque_ativo is None:
+             valor_total_estoque_ativo = 0.0 # Garante 0 se não houver carros
+
+        # 5. Carros por Categoria (Agrupado por Marca)
+        carros_por_categoria_query = db.session.query(
+            Carro.marca.label('categoria'), 
+            func.count(Carro.id).label('total')
+        ).group_by(Carro.marca).all()
+        
+        carros_por_categoria = [
+            {'categoria': row.categoria, 'total': row.total}
+            for row in carros_por_categoria_query
+        ]
+
+        # 6. Estrutura de Resposta
+        resposta = {
+            'total_carros': total_carros,
+            'carros_disponiveis': carros_disponiveis,
+            'carros_vendidos': carros_vendidos,
+            'valor_total_estoque': float(valor_total_estoque_ativo),
+            'carros_por_categoria': carros_por_categoria
+        }
+        
+        return jsonify(resposta), 200
+
+    except Exception as e:
+        print(f"Erro ao buscar estatísticas do dashboard: {str(e)}")
+        # Retorna erro 500 para notificar o frontend sobre a falha
+        return jsonify({'message': 'Erro interno ao calcular estatísticas'}), 500
 
 
 # =====================
@@ -436,6 +431,8 @@ def listar_atividades_dashboard():
 
 if __name__ == '__main__':
     with app.app_context():
+        # Cria as tabelas se não existirem
         db.create_all()
-    ##app.run(debug=True, host='0.0.0.0', port=5000)
+    
+    # Inicia o servidor Flask
     app.run(host="0.0.0.0", port=5000, debug=True)
